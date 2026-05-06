@@ -1,0 +1,185 @@
+const express = require('express');
+const router = express.Router();
+const crypto = require('crypto');
+const Usuario = require('../models/Usuario');
+const Empresa = require('../models/Empresa');
+const Medicion = require('../models/Medicion');
+const verificarToken = require('../middleware/auth');
+const { enviarPasswordProvisional } = require('../utils/mailer');
+
+// Middleware: solo admin
+function soloAdmin(req, res, next) {
+  if (req.usuario.rol !== 'admin')
+    return res.status(403).json({ error: 'Acceso denegado. Solo administradores.' });
+  next();
+}
+
+router.use(verificarToken, soloAdmin);
+
+// POST /api/admin/empresas
+// Admin crea una empresa y su gerente desde el panel
+router.post('/empresas', async (req, res) => {
+  try {
+    const { nombreEmpresa, mesesContrato, gerenteNombre, gerenteEmail, gerenteTelefono } = req.body;
+
+    if (!nombreEmpresa || !mesesContrato || !gerenteNombre || !gerenteEmail)
+      return res.status(400).json({ error: 'Todos los campos son requeridos' });
+
+    if (![1, 3, 6].includes(Number(mesesContrato)))
+      return res.status(400).json({ error: 'Los meses deben ser 1, 3 o 6' });
+
+    if (await Usuario.findOne({ email: gerenteEmail }))
+      return res.status(400).json({ error: 'Ya existe una cuenta con ese correo' });
+
+    const tempPassword = crypto.randomBytes(4).toString('hex');
+
+    const empresa = new Empresa({
+      nombre: nombreEmpresa,
+      contrato: { meses: Number(mesesContrato) },
+      gerente: { nombre: gerenteNombre, correo: gerenteEmail, telefono: gerenteTelefono }
+    });
+    await empresa.save();
+
+    const gerente = new Usuario({
+      nombre: gerenteNombre,
+      email: gerenteEmail,
+      telefono: gerenteTelefono || '',
+      password: tempPassword,
+      rol: 'gerente',
+      empresa: empresa._id
+    });
+    await gerente.save();
+
+    await enviarPasswordProvisional(gerenteEmail, gerenteNombre, tempPassword);
+
+    res.json({ mensaje: `Empresa "${nombreEmpresa}" creada. Contraseña enviada al gerente.`, empresa });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/admin/empresas
+// Lista todas las empresas con stats y días restantes de contrato
+router.get('/empresas', async (req, res) => {
+  try {
+    const { buscar } = req.query;
+    const filtro = buscar ? { nombre: { $regex: buscar, $options: 'i' } } : {};
+
+    const empresas = await Empresa.find(filtro).sort({ fechaCreacion: -1 });
+
+    const resultado = await Promise.all(empresas.map(async (emp) => {
+      const totalUsuarios = await Usuario.countDocuments({ empresa: emp._id });
+      const totalMediciones = await Medicion.countDocuments({ empresa: emp._id });
+      const ultimaMedicion  = await Medicion.findOne({ empresa: emp._id }).sort({ fecha: -1 });
+      const dias = emp.diasRestantes();
+
+      return {
+        _id: emp._id,
+        nombre: emp.nombre,
+        apiKey: emp.apiKey,
+        claveAcceso: emp.claveAcceso,
+        activa: emp.activa,
+        contrato: emp.contrato,
+        diasRestantes: dias,
+        porVencer: dias !== null && dias <= 5 && dias >= 0,
+        vencida: dias !== null && dias < 0,
+        gerente: emp.gerente,
+        totalUsuarios,
+        totalMediciones,
+        ultimaMedicion: ultimaMedicion?.fecha || null,
+        fechaCreacion:  emp.fechaCreacion
+      };
+    }));
+
+    res.json(resultado);
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/admin/gerentes
+router.get('/gerentes', async (req, res) => {
+  try {
+    const { buscar } = req.query;
+    const filtro = { rol: 'gerente' };
+    if (buscar) filtro.$or = [
+      { nombre: { $regex: buscar, $options: 'i' } },
+      { email: { $regex: buscar, $options: 'i' } }
+    ];
+
+    const gerentes = await Usuario.find(filtro)
+      .select('-password')
+      .populate('empresa', 'nombre activa contrato')
+      .sort({ fechaCreacion: -1 });
+
+    res.json(gerentes);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PATCH /api/admin/empresas/:id/toggle
+router.patch('/empresas/:id/toggle', async (req, res) => {
+  try {
+    const empresa = await Empresa.findById(req.params.id);
+    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+
+    empresa.activa = !empresa.activa;
+    await empresa.save();
+
+    res.json({
+      mensaje: `Empresa ${empresa.activa ? 'activada' : 'suspendida'} correctamente`,
+      activa: empresa.activa
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PATCH /api/admin/empresas/:id/renovar
+// Renueva el contrato de una empresa
+router.patch('/empresas/:id/renovar', async (req, res) => {
+  try {
+    const { meses } = req.body;
+    if (![1, 3, 6].includes(Number(meses)))
+      return res.status(400).json({ error: 'Los meses deben ser 1, 3 o 6' });
+
+    const empresa = await Empresa.findById(req.params.id);
+    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+
+    // Si ya venció parte desde hoy, si no desde el fin anterior
+    const base = empresa.contrato.fin && empresa.contrato.fin > new Date()
+      ? empresa.contrato.fin
+      : new Date();
+
+    const nuevaFin = new Date(base);
+    nuevaFin.setMonth(nuevaFin.getMonth() + Number(meses));
+
+    empresa.contrato.meses = Number(meses);
+    empresa.contrato.fin = nuevaFin;
+    empresa.activa = true;
+    await empresa.save();
+
+    res.json({ mensaje: `Contrato renovado por ${meses} mes(es)`, empresa });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/admin/usuarios/:id
+router.delete('/usuarios/:id', async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.params.id);
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (usuario.rol === 'admin') return res.status(403).json({ error: 'No puedes eliminar otro admin' });
+
+    await Usuario.findByIdAndDelete(req.params.id);
+    res.json({ mensaje: 'Usuario eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+module.exports = router;

@@ -1,0 +1,34 @@
+.nombre_empresa_stat {
+  font-size: 1.2rem;
+  word-break: break-word;
+}
+
+.texto_dato {
+  color: #e0e0e0;
+  font-size: 0.95rem;
+}
+
+/* Tarjeta contrato normal */
+#tarjeta_contrato {
+  transition: background 0.3s, border-color 0.3s;
+}
+
+/* Contrato por vencer: naranja */
+#tarjeta_contrato.contrato_alerta {
+  background: #3a2a00;
+  border-left-color: #f39c12;
+}
+
+#tarjeta_contrato.contrato_alerta .numero_stat {
+  color: #f39c12;
+}
+
+/* Contrato vencido: rojo */
+#tarjeta_contrato.contrato_vencido {
+  background: #2a0000;
+  border-left-color: #e74c3c;
+}
+
+#tarjeta_contrato.contrato_vencido .numero_stat {
+  color: #e74c3c;
+}

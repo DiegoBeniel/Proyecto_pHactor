@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso — Phactor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+  <header class="header_login">
+    <div class="container d-flex justify-content-between align-items-center py-3">
+      <a href="index.html" class="logo_texto">Phactor</a>
+    </div>
+  </header>
+
+  <main class="d-flex align-items-center justify-content-center py-5">
+    <div class="form_contenedor">
+
+      <div id="vista_login">
+        <h2 class="form_titulo">Iniciar sesión</h2>
+        <p class="form_subtitulo">Ingresa con tu correo y contraseña</p>
+
+        <div id="login_error" class="alerta_error d-none"></div>
+
+        <div class="mb-3">
+          <label class="form_label">Correo electrónico</label>
+          <input type="email" id="login_email" class="form_input" placeholder="tucorreo@gmail.com">
+        </div>
+
+        <div class="mb-3">
+          <label class="form_label">Contraseña</label>
+          <input type="password" id="login_password" class="form_input" placeholder="Tu contraseña">
+        </div>
+
+        <button id="btn_login" class="btn_principal w-100">Entrar</button>
+
+        <p class="texto_link mt-3">
+          ¿Ya eres parte de una empresa?
+          <a href="#" onclick="mostrarVista('vista_unirse')">Únete a tu empresa</a>
+        </p>
+      </div>
+
+      <div id="vista_unirse" class="d-none">
+        <h2 class="form_titulo">Unirse a empresa</h2>
+        <p class="form_subtitulo">Pide la clave de acceso a tu gerente</p>
+
+        <div id="unirse_error" class="alerta_error d-none"></div>
+        <div id="unirse_exito" class="alerta_exito d-none"></div>
+
+        <div class="mb-3">
+          <label class="form_label">Tu nombre</label>
+          <input type="text" id="unirse_nombre" class="form_input" placeholder="Diego García">
+        </div>
+
+        <div class="mb-3">
+          <label class="form_label">Tu correo</label>
+          <input type="email" id="unirse_email" class="form_input" placeholder="tucorreo@gmail.com">
+        </div>
+
+        <div class="mb-3">
+          <label class="form_label">Tu teléfono</label>
+          <input type="tel" id="unirse_telefono" class="form_input" placeholder="33 1234 5678">
+        </div>
+
+        <div class="mb-3">
+          <label class="form_label">Nombre de la empresa</label>
+          <input type="text" id="unirse_empresa" class="form_input" placeholder="Jabones El Fresno">
+        </div>
+
+        <div class="mb-3">
+          <label class="form_label">Clave de acceso</label>
+          <input type="text" id="unirse_clave" class="form_input" placeholder="FRESNO-4821" style="text-transform:uppercase;">
+        </div>
+
+        <button id="btn_unirse" class="btn_principal w-100">Unirse</button>
+
+        <p class="texto_link mt-3">
+          <a href="#" onclick="mostrarVista('vista_login')">Volver al login</a>
+        </p>
+      </div>
+
+      <div id="vista_password" class="d-none">
+        <h2 class="form_titulo">Cambiar contraseña</h2>
+        <p class="form_subtitulo">Ingresa tu contraseña actual y la nueva</p>
+
+        <div id="password_error" class="alerta_error d-none"></div>
+        <div id="password_exito" class="alerta_exito d-none"></div>
+
+        <div class="mb-3">
+          <label class="form_label">Contraseña actual</label>
+          <input type="password" id="pw_actual" class="form_input" placeholder="Tu contraseña actual">
+        </div>
+
+        <div class="mb-3">
+          <label class="form_label">Contraseña nueva</label>
+          <input type="password" id="pw_nueva" class="form_input" placeholder="Mínimo 6 caracteres">
+        </div>
+
+        <div class="mb-3">
+          <label class="form_label">Confirmar contraseña nueva</label>
+          <input type="password" id="pw_confirmar" class="form_input" placeholder="Repite la nueva contraseña">
+        </div>
+
+        <button id="btn_cambiar" class="btn_principal w-100">Guardar contraseña</button>
+
+        <p class="texto_link mt-3">
+          <a href="javascript:history.back()">Volver</a>
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer_login">
+    <div class="container text-center">
+      <p>Phactor - Control de Calidad</p>
+      <p>Jabón Líquido de Ortiga y Diente de León</p>
+      <p>CETI 2026 - Diego y Andrés</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

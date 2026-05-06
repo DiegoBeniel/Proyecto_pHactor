@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phactor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+  <nav class="navbar navbar-dark barra_nav px-3 px-md-4">
+    <span class="navbar-brand titulo_nav">Phactor - Gestión de Calidad de Jabón Líquido</span>
+    <div class="d-flex align-items-center gap-3">
+      <span id="reloj" class="texto_reloj d-none d-sm-inline">--:--:--</span>
+      <div class="dropdown">
+        <button class="btn boton_usuario dropdown-toggle" id="menu_usuario" data-bs-toggle="dropdown">
+          <span id="nombre_usuario">--</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end menu_desplegable">
+          <li><button class="dropdown-item" onclick="abrirModalNombre()">Cambiar nombre</button></li>
+          <li><a class="dropdown-item" href="login.html?vista=password">Cambiar contraseña</a></li>
+          <li><hr class="dropdown-divider separador_menu"></li>
+          <li><button class="dropdown-item texto_peligro" id="btn_cerrar_sesion">Cerrar sesión</button></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Modal cambiar nombre -->
+  <div class="modal fade" id="modal_nombre" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content caja_modal">
+        <div class="modal-header borde_modal">
+          <h5 class="modal-title titulo_modal">Cambiar nombre</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="error_modal_nombre" class="alert alerta_error d-none"></div>
+          <div id="exito_modal_nombre" class="alert alerta_exito d-none"></div>
+          <label class="form-label etiqueta_campo">Nuevo nombre</label>
+          <input type="text" id="campo_nuevo_nombre" class="form-control campo_entrada" placeholder="Tu nombre">
+        </div>
+        <div class="modal-footer borde_modal">
+          <button id="btn_guardar_nombre" class="btn boton_principal">Guardar</button>
+          <button class="btn boton_secundario" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="container-fluid contenido_principal">
+
+    <h2 class="titulo_seccion mb-3">Datos actuales</h2>
+
+    <!-- Tarjetas de estado -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-4">
+        <div class="tarjeta_medicion" id="tarjeta_ph">
+          <p class="etiqueta_medicion">pH</p>
+          <p class="valor_medicion" id="valor_ph">--</p>
+          <p class="rango_medicion">Rango óptimo: 5.0 – 7.0</p>
+          <span class="indicador_estado" id="indicador_ph">--</span>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="tarjeta_medicion" id="tarjeta_temp">
+          <p class="etiqueta_medicion">Temperatura</p>
+          <p class="valor_medicion" id="valor_temp">--</p>
+          <p class="rango_medicion">Rango óptimo: 20°C – 40°C</p>
+          <span class="indicador_estado" id="indicador_temp">--</span>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="tarjeta_medicion" id="tarjeta_estado">
+          <p class="etiqueta_medicion">Estado del Lote</p>
+          <p class="valor_medicion" id="icono_estado">--</p>
+          <p class="rango_medicion">Última medición:</p>
+          <span class="indicador_estado" id="indicador_estado">--</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de mediciones -->
+    <div class="seccion_tabla mb-4">
+      <h2 class="titulo_seccion mb-3">Últimas mediciones registradas</h2>
+      <div class="table-responsive">
+        <table class="table table-dark tabla_datos">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Fecha y Hora</th>
+              <th>pH</th>
+              <th>Cambio de pH</th>
+              <th>Temperatura</th>
+              <th>Cambio de Temp</th>
+              <th>Tiempo desde anterior</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="filas_mediciones">
+            <tr><td colspan="8" class="texto_cargando">Cargando datos...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="nota_actualizacion" id="nota_actualizacion">Actualizando al detectar cambios...</p>
+    </div>
+
+    <!-- Gráficas -->
+    <div class="seccion_tabla mb-4">
+      <h2 class="titulo_seccion mb-3">Gráficas de los datos</h2>
+      <div class="row g-3">
+        <div class="col-12 col-lg-6">
+          <div class="contenedor_grafica">
+            <canvas id="grafica_ph"></canvas>
+          </div>
+        </div>
+        <div class="col-12 col-lg-6">
+          <div class="contenedor_grafica">
+            <canvas id="grafica_temp"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="pie_pagina text-center py-3">
+    <p>Control de Calidad </p>
+    <p>Jabón Líquido de Ortiga y Diente de León</p>
+    <p>CETI 2026 - Diego y Andrés</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
