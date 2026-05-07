@@ -22,7 +22,7 @@
       <div class="hero_contenido text-center">
         <h1 class="hero_titulo">Monitoreo en tiempo real para tu <span class="titulo_morado">línea de producción</span></h1>
         <p class="hero_subtitulo">
-          Controla el pH y la temperatura de tu jabón desde cualquier dispositivo solo con internet.
+          Controla el pH, la temperatura y el nivel de llenado de tus tambos desde cualquier dispositivo solo con internet.
           Detecta cambios al instante y mantén un historial completo de cada lote.
           <br><br>
           <strong class="hero_fuerte">Diseñado para Jabón Líquido de Ortiga y Diente de León</strong>
@@ -43,8 +43,8 @@
           <div class="estadistica_etiqueta">Temperatura</div>
         </div>
         <div class="estadistica_espacios">
-          <div class="estadistica_valor azul">365</div>
-          <div class="estadistica_etiqueta">Días de historial</div>
+          <div class="estadistica_valor azul">%</div>
+          <div class="estadistica_etiqueta">Nivel de llenado</div>
         </div>
         <div class="estadistica_espacios">
           <div class="estadistica_valor amarillo">24/7</div>
@@ -59,26 +59,34 @@
       <div class="seccion_etiqueta">Funciones principales</div>
       <div class="seccion_titulo">Todo lo que necesitas en un solo lugar</div>
       <div class="seccion_subtitulo">Diseñado para Jabón Líquido de Ortiga y Diente de León.</div>
+
       <div class="row g-4">
-        <div class="col-md-4">
+        <div class="col-md-6 col-lg-3">
           <div class="tarjeta_funcion h-100 p-4">
             <div class="funcion_icono icono_morado">pH</div>
             <h3 class="funcion_titulo">Monitoreo de pH</h3>
             <p class="funcion_texto">Sensor en tiempo real con alertas automáticas cuando el pH sale del rango óptimo para tu fórmula.</p>
           </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6 col-lg-3">
           <div class="tarjeta_funcion h-100 p-4">
             <div class="funcion_icono icono_verde">°C</div>
             <h3 class="funcion_titulo">Control de temperatura</h3>
             <p class="funcion_texto">Detecta variaciones antes de que afecten la calidad del lote. Historial por hora y por día.</p>
           </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6 col-lg-3">
           <div class="tarjeta_funcion h-100 p-4">
-            <div class="funcion_icono icono_azul">≡</div>
-            <h3 class="funcion_titulo">Historial completo</h3>
-            <p class="funcion_texto">Registros permanentes de cada medición para auditorías y reportes de salubridad sin complicaciones.</p>
+            <div class="funcion_icono icono_azul">%</div>
+            <h3 class="funcion_titulo">Nivel de llenado</h3>
+            <p class="funcion_texto">Sensor ultrasónico que mide cuánto producto queda en cada tambo. Alerta automática cuando el nivel baja del mínimo.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="tarjeta_funcion h-100 p-4">
+            <div class="funcion_icono icono_amarillo">≡</div>
+            <h3 class="funcion_titulo">Multi-tambo</h3>
+            <p class="funcion_texto">Conecta varios tambos a la misma cuenta. Cada uno con su propio sensor y su propio panel de datos.</p>
           </div>
         </div>
       </div>
@@ -146,9 +154,9 @@
   <script>
     if (localStorage.getItem('token')) {
       const rol = localStorage.getItem('rol');
-      if (rol === 'admin')   window.location.href = 'admin.html';
+      if (rol === 'admin')        window.location.href = 'admin.html';
       else if (rol === 'gerente') window.location.href = 'gerente.html';
-      else window.location.href = 'dashboard.html';
+      else                        window.location.href = 'dashboard.html';
     }
   </script>
 </body>

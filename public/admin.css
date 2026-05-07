@@ -7,7 +7,7 @@ body {
   flex-direction: column;
 }
 
-/* ── Navbar ── */
+/* Navbar */
 .barra_nav {
   background: #000;
   border-bottom: 1px solid #333;
@@ -36,7 +36,6 @@ body {
   background: #242424;
 }
 
-/* ── Menú desplegable ── */
 .menu_desplegable {
   background: #242424;
   border: 1px solid #333;
@@ -57,7 +56,7 @@ body {
 
 .texto_peligro { color: #e74c3c !important; }
 
-/* ── Modal ── */
+/* Modal */
 .caja_modal {
   background: #242424;
   border: 1px solid #333;
@@ -68,7 +67,6 @@ body {
 
 .titulo_modal { color: #952ecc; }
 
-/* ── Contenido principal ── */
 .contenido_principal {
   padding: 24px 16px;
   flex: 1;
@@ -78,7 +76,7 @@ body {
   .contenido_principal { padding: 30px 32px; }
 }
 
-/* ── Tarjetas de estadísticas ── */
+/*Tarjetas de estadísticas*/
 .tarjeta_stat {
   background: #242424;
   border-radius: 12px;
@@ -118,7 +116,7 @@ body {
   margin: 0;
 }
 
-/* ── Campos de formulario ── */
+/* Campos de formulario */
 .etiqueta_campo {
   font-size: 0.8rem;
   color: #9e9e9e;
@@ -132,10 +130,10 @@ body {
 }
 
 .campo_entrada:focus {
-  border-color: #952ecc !important;
-  box-shadow: none !important;
-  color: #e0e0e0 !important;
-  background: #1a1a1a !important;
+  border-color: #952ecc ;
+  box-shadow: none;
+  color: #e0e0e0;
+  background: #1a1a1a;
 }
 
 .campo_entrada option { background: #1a1a1a; }

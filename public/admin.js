@@ -45,7 +45,7 @@ function abrirModalNombre() {
 }
 
 document.getElementById('btn_guardar_nombre').addEventListener('click', async () => {
-  const nombre = document.getElementById('campo_nuevo_nombre').value.trim();
+  const nombre    = document.getElementById('campo_nuevo_nombre').value.trim();
   const div_error = document.getElementById('error_modal_nombre');
   const div_exito = document.getElementById('exito_modal_nombre');
   div_error.classList.add('d-none');
@@ -81,11 +81,11 @@ document.getElementById('btn_guardar_nombre').addEventListener('click', async ()
   }
 });
 
-// Generar campos de nombre y capacidad por cada nodo
-// Se llama al cambiar el select de cantidad, y al abrir el modal
+// Genera campos de nombre y altura por cada nodo
+// Se llama al cambiar el select de cantidad y al abrir el modal
 function generarCamposNodos() {
-  const cantidad= parseInt(document.getElementById('campo_cantidad_nodos').value);
-  const contenedor= document.getElementById('contenedor_nodos');
+  const cantidad   = parseInt(document.getElementById('campo_cantidad_nodos').value);
+  const contenedor = document.getElementById('contenedor_nodos');
   contenedor.innerHTML = '';
 
   for (let i = 0; i < cantidad; i++) {
@@ -97,8 +97,8 @@ function generarCamposNodos() {
           <input type="text" id="nodo_nombre_${i}" class="form-control campo_entrada mb-2"
             placeholder="Ej: Tambo Norte" value="Nodo ${i + 1}">
           <label class="form-label etiqueta_campo">Altura del tambo (cm)</label>
-          <input type="number" id="nodo_capacidad_${i}" class="form-control campo_entrada"
-          placeholder="Ej: 80" min="1">
+          <input type="number" id="nodo_altura_${i}" class="form-control campo_entrada"
+            placeholder="Ej: 80" min="1">
         </div>
       </div>`;
   }
@@ -113,12 +113,12 @@ document.getElementById('modal_crear_empresa').addEventListener('show.bs.modal',
 
 // Crear empresa con nodos
 document.getElementById('btn_crear_empresa').addEventListener('click', async () => {
-  const nombre_empresa= document.getElementById('campo_empresa').value.trim();
-  const meses_contrato= document.getElementById('campo_meses').value;
-  const nombre_gerente= document.getElementById('campo_gerente_nombre').value.trim();
-  const email_gerente= document.getElementById('campo_gerente_email').value.trim();
-  const tel_gerente= document.getElementById('campo_gerente_tel').value.trim();
-  const cantidad_nodos= parseInt(document.getElementById('campo_cantidad_nodos').value);
+  const nombre_empresa  = document.getElementById('campo_empresa').value.trim();
+  const meses_contrato  = document.getElementById('campo_meses').value;
+  const nombre_gerente  = document.getElementById('campo_gerente_nombre').value.trim();
+  const email_gerente   = document.getElementById('campo_gerente_email').value.trim();
+  const tel_gerente     = document.getElementById('campo_gerente_tel').value.trim();
+  const cantidad_nodos  = parseInt(document.getElementById('campo_cantidad_nodos').value);
 
   const div_error = document.getElementById('error_crear');
   const div_exito = document.getElementById('exito_crear');
@@ -130,14 +130,14 @@ document.getElementById('btn_crear_empresa').addEventListener('click', async () 
   if (!email_gerente.includes('@'))
     return mostrarMensaje(div_error, 'Ingresa un correo válido para el gerente.');
 
-  // Recolecta nombre y capacidad de cada nodo desde los inputs dinámicos
+  // Recolecta nombre y altura de cada nodo desde los inputs dinámicos
   const nodos = [];
   for (let i = 0; i < cantidad_nodos; i++) {
-    const nombre_nodo= document.getElementById(`nodo_nombre_${i}`)?.value.trim() || `Nodo ${i + 1}`;
-    const capacidad_nodo= document.getElementById(`nodo_capacidad_${i}`)?.value;
+    const nombre_nodo = document.getElementById(`nodo_nombre_${i}`)?.value.trim() || `Nodo ${i + 1}`;
+    const altura_nodo = document.getElementById(`nodo_altura_${i}`)?.value;
     nodos.push({
-      nombre: nombre_nodo,
-      alturaCm: capacidad_nodo ? Number(capacidad_nodo) : null
+      nombre:   nombre_nodo,
+      alturaCm: altura_nodo ? Number(altura_nodo) : null // altura que usará el ESP32 para calcular el %
     });
   }
 
@@ -164,7 +164,6 @@ document.getElementById('btn_crear_empresa').addEventListener('click', async () 
 
     mostrarMensaje(div_exito, `✓ ${data.mensaje}`);
 
-    // Limpiar campos del formulario
     ['campo_empresa','campo_meses','campo_gerente_nombre','campo_gerente_email','campo_gerente_tel']
       .forEach(id => document.getElementById(id).value = '');
     document.getElementById('campo_cantidad_nodos').value = '1';
@@ -198,7 +197,7 @@ document.getElementById('campo_buscar').addEventListener('keydown', e => {
 
 // Cargar empresas
 async function cargarEmpresas(buscar = '') {
-  const tbody= document.getElementById('filas_empresas');
+  const tbody     = document.getElementById('filas_empresas');
   const div_error = document.getElementById('error_empresas');
 
   try {
@@ -216,7 +215,6 @@ async function cargarEmpresas(buscar = '') {
     document.getElementById('empresas_activas').textContent = empresas.filter(e => e.activa).length;
 
     if (empresas.length === 0) {
-      // colspan 10 porque ahora hay 10 columnas
       tbody.innerHTML = '<tr><td colspan="10" class="texto_cargando">No hay empresas registradas</td></tr>';
       renderizarAlertas([]);
       return;
@@ -244,7 +242,6 @@ async function cargarEmpresas(buscar = '') {
           <td>${emp.totalUsuarios}</td>
           <td>${emp.totalNodos || 0}</td>
           <td>
-            <!-- botón que abre el modal con las apiKeys de los nodos -->
             <button class="btn boton_toggle"
               onclick="verKeys('${emp._id}', '${emp.nombre}', '${nodos_json}')">
               Ver keys
@@ -274,7 +271,7 @@ async function cargarEmpresas(buscar = '') {
   }
 }
 
-// Abre el modal con las apiKeys de los nodos de una empresa
+// Abre el modal con las apiKeys y altura de los nodos de una empresa
 function verKeys(id, nombre, nodos_string) {
   const nodos = JSON.parse(nodos_string.replace(/&quot;/g, '"'));
 
@@ -342,7 +339,7 @@ async function cargarGerentes(buscar = '') {
     const url = buscar
       ? `/api/admin/gerentes?buscar=${encodeURIComponent(buscar)}`
       : '/api/admin/gerentes';
-    const res     = await fetch(url, { headers: encabezados() });
+    const res      = await fetch(url, { headers: encabezados() });
     const gerentes = await res.json();
 
     document.getElementById('total_gerentes').textContent = gerentes.length;

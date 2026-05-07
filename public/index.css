@@ -164,6 +164,7 @@ body {
 .estadistica_valor.verde{ color: #2ecc71;}
 .estadistica_valor.azul{ color: #5b9ef8;}
 .estadistica_valor.amarillo{ color: #f39c12;}
+.estadistica_valor.rosa{ color: #f31282;}
 
 .estadistica_etiqueta {
   font-size: 17px;

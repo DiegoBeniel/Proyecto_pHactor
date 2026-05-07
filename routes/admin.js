@@ -34,34 +34,36 @@ router.post('/empresas', async (req, res) => {
     const tempPassword = crypto.randomBytes(4).toString('hex');
 
     const nodosArray = Array.isArray(nodos)
-  ? nodos.map((n, i) => ({
-      nombre: n.nombre?.trim() || `Nodo ${i + 1}`,
-      alturaCm: n.alturaCm ? Number(n.alturaCm) : null
-    }))
-  : [{ nombre: 'Nodo 1', capacidadLitros: null }];
-    
+      ? nodos.map((n, i) => ({
+          nombre:   n.nombre?.trim() || `Nodo ${i + 1}`,
+          alturaCm: n.alturaCm ? Number(n.alturaCm) : null // altura del tambo en cm para el ESP32
+        }))
+      : [{ nombre: 'Nodo 1', alturaCm: null }];
+
     const empresa = new Empresa({
-      nombre:nombreEmpresa,
-      nodos:nodosArray,
+      nombre:   nombreEmpresa,
+      nodos:    nodosArray,
       contrato: { meses: Number(mesesContrato) },
       gerente:  { nombre: gerenteNombre, correo: gerenteEmail, telefono: gerenteTelefono }
-});
+    });
     await empresa.save();
 
     const gerente = new Usuario({
-      nombre: gerenteNombre,
-      email: gerenteEmail,
+      nombre:   gerenteNombre,
+      email:    gerenteEmail,
       telefono: gerenteTelefono || '',
       password: tempPassword,
-      rol: 'gerente',
-      empresa: empresa._id
+      rol:      'gerente',
+      empresa:  empresa._id
     });
     await gerente.save();
 
     await enviarPasswordProvisional(gerenteEmail, gerenteNombre, tempPassword);
 
     res.json({
-      mensaje: `Empresa "${nombreEmpresa}" creada con ${nodosArray.length} nodo(s). Contraseña enviada al gerente.`, empresa});
+      mensaje: `Empresa "${nombreEmpresa}" creada con ${nodosArray.length} nodo(s). Contraseña enviada al gerente.`,
+      empresa
+    });
 
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -78,31 +80,29 @@ router.get('/empresas', async (req, res) => {
     const empresas = await Empresa.find(filtro).sort({ fechaCreacion: -1 });
 
     const resultado = await Promise.all(empresas.map(async (emp) => {
-      const totalUsuarios = await Usuario.countDocuments({ empresa: emp._id });
+      const totalUsuarios   = await Usuario.countDocuments({ empresa: emp._id });
       const totalMediciones = await Medicion.countDocuments({ empresa: emp._id });
       const ultimaMedicion  = await Medicion.findOne({ empresa: emp._id }).sort({ fecha: -1 });
       const dias = emp.diasRestantes();
 
       return {
-        _id: emp._id,
+        _id:    emp._id,
         nombre: emp.nombre,
-
         // admin ve nodos con sus apiKeys para programar los ESP32
         nodos: emp.nodos.map(n => ({
-          nombre: n.nombre,
-          alturaCm: n.alturaCm,
-          apiKey: n.apiKey,
-          activo: n.activo
+          nombre:   n.nombre,
+          alturaCm: n.alturaCm, // altura del tambo que necesita el ESP32 para calcular el %
+          apiKey:   n.apiKey,
+          activo:   n.activo
         })),
         totalNodos: emp.nodos.length,
-// claveAcceso no se manda al admin, eso es del gerente con sus usuarios
-
-        activa: emp.activa,
-        contrato: emp.contrato,
-        diasRestantes: dias,
-        porVencer: dias !== null && dias <= 5 && dias >= 0,
-        vencida: dias !== null && dias < 0,
-        gerente: emp.gerente,
+        // claveAcceso no se manda al admin, eso es del gerente con sus usuarios
+        activa:         emp.activa,
+        contrato:       emp.contrato,
+        diasRestantes:  dias,
+        porVencer:      dias !== null && dias <= 5 && dias >= 0,
+        vencida:        dias !== null && dias < 0,
+        gerente:        emp.gerente,
         totalUsuarios,
         totalMediciones,
         ultimaMedicion: ultimaMedicion?.fecha || null,
@@ -124,7 +124,7 @@ router.get('/gerentes', async (req, res) => {
     const filtro = { rol: 'gerente' };
     if (buscar) filtro.$or = [
       { nombre: { $regex: buscar, $options: 'i' } },
-      { email: { $regex: buscar, $options: 'i' } }
+      { email:  { $regex: buscar, $options: 'i' } }
     ];
 
     const gerentes = await Usuario.find(filtro)
@@ -149,7 +149,7 @@ router.patch('/empresas/:id/toggle', async (req, res) => {
 
     res.json({
       mensaje: `Empresa ${empresa.activa ? 'activada' : 'suspendida'} correctamente`,
-      activa: empresa.activa
+      activa:  empresa.activa
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -167,7 +167,6 @@ router.patch('/empresas/:id/renovar', async (req, res) => {
     const empresa = await Empresa.findById(req.params.id);
     if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
 
-    // Si ya venció parte desde hoy, si no desde el fin anterior
     const base = empresa.contrato.fin && empresa.contrato.fin > new Date()
       ? empresa.contrato.fin
       : new Date();
@@ -175,9 +174,9 @@ router.patch('/empresas/:id/renovar', async (req, res) => {
     const nuevaFin = new Date(base);
     nuevaFin.setMonth(nuevaFin.getMonth() + Number(meses));
 
-    empresa.contrato.meses = Number(meses);
-    empresa.contrato.fin = nuevaFin;
-    empresa.activa = true;
+    empresa.contrato.meses= Number(meses);
+    empresa.contrato.fin= nuevaFin;
+    empresa.activa= true;
     await empresa.save();
 
     res.json({ mensaje: `Contrato renovado por ${meses} mes(es)`, empresa });
