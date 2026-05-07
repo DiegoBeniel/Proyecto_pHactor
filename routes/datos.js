@@ -10,20 +10,29 @@ router.post('/', async (req, res) => {
     const apiKey = req.headers['x-api-key'];
     if (!apiKey) return res.status(401).json({ error: 'Se requiere x-api-key en el header' });
 
-    const empresa = await Empresa.findOne({ apiKey });
+    const empresa = await Empresa.findOne({ 'nodos.apiKey': apiKey });
     if (!empresa) return res.status(401).json({ error: 'API Key inválida' });
     if (!empresa.activa) return res.status(403).json({ error: 'Empresa suspendida, no se aceptan datos' });
+
+    // identifica cuál nodo corresponde a esa apiKey 
+    const nodo = empresa.nodos.find(n => n.apiKey === apiKey);
+    if (!nodo || !nodo.activo) return res.status(403).json({ error: 'Nodo inactivo o no encontrado' });
   
     // Verificar que el contrato no haya vencido
     if (empresa.contrato?.fin && new Date() > empresa.contrato.fin) {
       return res.status(403).json({ error: 'Contrato vencido, no se aceptan datos. Contacta al administrador.' });
 }
 
-    const { ph, temperatura } = req.body;
+    const { ph, temperatura, nivel } = req.body;
     if (ph === undefined || temperatura === undefined)
       return res.status(400).json({ error: 'Se requieren ph y temperatura' });
-
-    const medicion = new Medicion({ ph, temperatura, empresa: empresa._id });
+   
+    const medicion = new Medicion({
+      ph,
+      temperatura,
+      nivel:      nivel !== undefined ? Number(nivel) : null, // opcional, null si el ESP32 no lo manda
+      empresa:    empresa._id,
+      nodoNombre: nodo.nombre });
     await medicion.save();
     res.json({ mensaje: 'Dato guardado', medicion });
 
@@ -51,6 +60,10 @@ router.get('/', verificarToken, async (req, res) => {
 }
 
 const filtro = req.usuario.rol === 'admin' ? {} : { empresa: req.usuario.empresa };
+
+// filtra por nodo si el frontend lo pide (?nodo=Nodo 1)
+if (req.query.nodo) filtro.nodoNombre = req.query.nodo;
+
 const datos  = await Medicion.find(filtro).sort({ fecha: -1 }).limit(100);
 res.json(datos);
 
@@ -62,11 +75,6 @@ res.json(datos);
 // GET /api/datos/ultima — protegido con JWT
 router.get('/ultima', verificarToken, async (req, res) => {
   try {
-    if (req.usuario.rol === 'cliente' && req.usuario.empresa) {
-      const empresa = await Empresa.findById(req.usuario.empresa);
-      if (empresa && !empresa.activa)
-        return res.status(403).json({ error: 'Empresa suspendida' });
-    }
 
 // Verificar contrato si no es admin
 if (req.usuario.rol !== 'admin' && req.usuario.empresa) {
@@ -78,6 +86,10 @@ if (req.usuario.rol !== 'admin' && req.usuario.empresa) {
 }
 
 const filtro = req.usuario.rol === 'admin' ? {} : { empresa: req.usuario.empresa };
+
+// filtra por nodo si el frontend lo pide (?nodo=Nodo 1)
+if (req.query.nodo) filtro.nodoNombre = req.query.nodo;
+
 const ultima = await Medicion.findOne(filtro).sort({ fecha: -1 });
 res.json(ultima);
 

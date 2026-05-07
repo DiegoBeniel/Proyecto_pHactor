@@ -1,49 +1,60 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
-const empresaSchema = new mongoose.Schema({
+// --- NUEVO: schema de cada nodo/tambo ---
+const nodoSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
-  apiKey: { type: String, unique: true },
+  alturaCm: { type: Number, default: null }, // altura interna del tambo en cm (para calcular % de llenado)
+  apiKey: { type: String, unique: true },   // una key por ESP32
+  activo: { type: Boolean, default: true }
+}, { _id: false });
+
+const empresaSchema = new mongoose.Schema({
+  nombre:{ type: String, required: true },
   claveAcceso: { type: String, unique: true }, // código simple para que usuarios se unan
   activa: { type: Boolean, default: true },
 
+  // array de nodos en lugar de una sola apiKey
+  nodos: [nodoSchema],
+
   // Datos del contrato
   contrato: {
-    meses:  { type: Number, enum: [1, 3, 6], required: true },
-    inicio: { type: Date, default: Date.now },
-    fin:    { type: Date }
+    meses:{ type: Number, enum: [1, 3, 6], required: true },
+    inicio:{ type: Date, default: Date.now },
+    fin:{ type: Date }
   },
 
   // Datos de contacto del gerente (para el panel admin)
   gerente: {
-    nombre: { type: String },
-    correo: { type: String },
+    nombre:{ type: String },
+    correo:{ type: String },
     telefono: { type: String }
   },
 
-  fechaCreacion: { type: Date, default: Date.now }
+  fechaCreacion:{ type: Date, default: Date.now }
 });
 
-// Genera apiKey y claveAcceso automáticamente antes de guardar
 empresaSchema.pre('save', function () {
-  if (!this.apiKey) {
-    this.apiKey = crypto.randomBytes(32).toString('hex');
-  }
-
+  // Genera claveAcceso legible tipo "FRESNO-4821"
   if (!this.claveAcceso) {
-    // Clave legible tipo "FRESNO-4821"
     const suffix = Math.floor(1000 + Math.random() * 9000);
     const prefix = this.nombre.replace(/\s+/g, '').toUpperCase().slice(0, 6);
     this.claveAcceso = `${prefix}-${suffix}`;
   }
 
+  // genera apiKey para cada nodo que aún no tenga
+  this.nodos.forEach(nodo => {
+    if (!nodo.apiKey) {
+      nodo.apiKey = crypto.randomBytes(32).toString('hex');
+    }
+  });
+
   // Calcular fecha de fin del contrato
-  if (this.contrato && this.contrato.meses) {
-    if (!this.contrato.fin) {
-      const fin = new Date(this.contrato.inicio || Date.now());
-      fin.setMonth(fin.getMonth() + this.contrato.meses);this.contrato.fin = fin;
+  if (this.contrato && this.contrato.meses && !this.contrato.fin) {
+    const fin = new Date(this.contrato.inicio || Date.now());
+    fin.setMonth(fin.getMonth() + this.contrato.meses);
+    this.contrato.fin = fin;
   }
-}
 });
 
 // Método para saber cuántos días quedan de contrato

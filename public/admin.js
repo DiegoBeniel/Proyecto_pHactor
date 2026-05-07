@@ -68,7 +68,6 @@ document.getElementById('btn_guardar_nombre').addEventListener('click', async ()
 
     if (!res.ok) return mostrarMensaje(div_error, data.error || 'Error al actualizar.');
 
-    // Actualizar nombre visible en el header y en localStorage
     localStorage.setItem('nombre', data.nombre);
     document.getElementById('nombre_admin').textContent = data.nombre;
     mostrarMensaje(div_exito, ' Nombre actualizado.');
@@ -82,13 +81,44 @@ document.getElementById('btn_guardar_nombre').addEventListener('click', async ()
   }
 });
 
-// Crear empresa
+// Generar campos de nombre y capacidad por cada nodo
+// Se llama al cambiar el select de cantidad, y al abrir el modal
+function generarCamposNodos() {
+  const cantidad= parseInt(document.getElementById('campo_cantidad_nodos').value);
+  const contenedor= document.getElementById('contenedor_nodos');
+  contenedor.innerHTML = '';
+
+  for (let i = 0; i < cantidad; i++) {
+    contenedor.innerHTML += `
+      <div class="col-12 col-md-6">
+        <div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:14px;">
+          <p class="etiqueta_campo mb-2" style="color:#952ecc; font-weight:600;">Nodo ${i + 1}</p>
+          <label class="form-label etiqueta_campo">Nombre del nodo</label>
+          <input type="text" id="nodo_nombre_${i}" class="form-control campo_entrada mb-2"
+            placeholder="Ej: Tambo Norte" value="Nodo ${i + 1}">
+          <label class="form-label etiqueta_campo">Altura del tambo (cm)</label>
+          <input type="number" id="nodo_capacidad_${i}" class="form-control campo_entrada"
+          placeholder="Ej: 80" min="1">
+        </div>
+      </div>`;
+  }
+}
+
+// Al abrir el modal: genera el primer nodo y limpia mensajes
+document.getElementById('modal_crear_empresa').addEventListener('show.bs.modal', () => {
+  generarCamposNodos();
+  document.getElementById('error_crear').classList.add('d-none');
+  document.getElementById('exito_crear').classList.add('d-none');
+});
+
+// Crear empresa con nodos
 document.getElementById('btn_crear_empresa').addEventListener('click', async () => {
-  const nombre_empresa = document.getElementById('campo_empresa').value.trim();
-  const meses_contrato = document.getElementById('campo_meses').value;
-  const nombre_gerente = document.getElementById('campo_gerente_nombre').value.trim();
-  const email_gerente = document.getElementById('campo_gerente_email').value.trim();
-  const tel_gerente = document.getElementById('campo_gerente_tel').value.trim();
+  const nombre_empresa= document.getElementById('campo_empresa').value.trim();
+  const meses_contrato= document.getElementById('campo_meses').value;
+  const nombre_gerente= document.getElementById('campo_gerente_nombre').value.trim();
+  const email_gerente= document.getElementById('campo_gerente_email').value.trim();
+  const tel_gerente= document.getElementById('campo_gerente_tel').value.trim();
+  const cantidad_nodos= parseInt(document.getElementById('campo_cantidad_nodos').value);
 
   const div_error = document.getElementById('error_crear');
   const div_exito = document.getElementById('exito_crear');
@@ -100,6 +130,17 @@ document.getElementById('btn_crear_empresa').addEventListener('click', async () 
   if (!email_gerente.includes('@'))
     return mostrarMensaje(div_error, 'Ingresa un correo válido para el gerente.');
 
+  // Recolecta nombre y capacidad de cada nodo desde los inputs dinámicos
+  const nodos = [];
+  for (let i = 0; i < cantidad_nodos; i++) {
+    const nombre_nodo= document.getElementById(`nodo_nombre_${i}`)?.value.trim() || `Nodo ${i + 1}`;
+    const capacidad_nodo= document.getElementById(`nodo_capacidad_${i}`)?.value;
+    nodos.push({
+      nombre: nombre_nodo,
+      alturaCm: capacidad_nodo ? Number(capacidad_nodo) : null
+    });
+  }
+
   const btn = document.getElementById('btn_crear_empresa');
   btn.disabled = true;
   btn.textContent = 'Creando...';
@@ -109,10 +150,11 @@ document.getElementById('btn_crear_empresa').addEventListener('click', async () 
       method: 'POST',
       headers: encabezados(),
       body: JSON.stringify({
-        nombreEmpresa: nombre_empresa,
-        mesesContrato: meses_contrato,
-        gerenteNombre: nombre_gerente,
-        gerenteEmail: email_gerente,
+        nombreEmpresa:   nombre_empresa,
+        mesesContrato:   meses_contrato,
+        nodos,
+        gerenteNombre:   nombre_gerente,
+        gerenteEmail:    email_gerente,
         gerenteTelefono: tel_gerente
       })
     });
@@ -120,11 +162,13 @@ document.getElementById('btn_crear_empresa').addEventListener('click', async () 
 
     if (!res.ok) return mostrarMensaje(div_error, data.error || 'Error al crear la empresa.');
 
-    mostrarMensaje(div_exito, `✓ Empresa "${nombre_empresa}" creada. Contraseña enviada a ${email_gerente}.`);
+    mostrarMensaje(div_exito, `✓ ${data.mensaje}`);
 
     // Limpiar campos del formulario
     ['campo_empresa','campo_meses','campo_gerente_nombre','campo_gerente_email','campo_gerente_tel']
       .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('campo_cantidad_nodos').value = '1';
+    generarCamposNodos();
 
     await cargarTodo();
 
@@ -152,9 +196,9 @@ document.getElementById('campo_buscar').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('btn_buscar').click();
 });
 
-// Crear
+// Cargar empresas
 async function cargarEmpresas(buscar = '') {
-  const tbody = document.getElementById('filas_empresas');
+  const tbody= document.getElementById('filas_empresas');
   const div_error = document.getElementById('error_empresas');
 
   try {
@@ -163,7 +207,6 @@ async function cargarEmpresas(buscar = '') {
       : '/api/admin/empresas';
     const res = await fetch(url, { headers: encabezados() });
 
-    // Token vencido o sin permisos
     if (res.status === 401) { localStorage.clear(); window.location.href = 'login.html'; return; }
     if (res.status === 403) { window.location.href = 'dashboard.html'; return; }
 
@@ -173,13 +216,13 @@ async function cargarEmpresas(buscar = '') {
     document.getElementById('empresas_activas').textContent = empresas.filter(e => e.activa).length;
 
     if (empresas.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" class="texto_cargando">No hay empresas registradas</td></tr>';
+      // colspan 10 porque ahora hay 10 columnas
+      tbody.innerHTML = '<tr><td colspan="10" class="texto_cargando">No hay empresas registradas</td></tr>';
       renderizarAlertas([]);
       return;
     }
 
     tbody.innerHTML = empresas.map(emp => {
-      // Color de días según urgencia
       let html_dias = '—';
       if (emp.diasRestantes !== null) {
         const clase = emp.vencida ? 'dias_vencido' : emp.porVencer ? 'dias_alerta' : 'dias_ok';
@@ -189,6 +232,9 @@ async function cargarEmpresas(buscar = '') {
       const clase_estado = emp.vencida ? 'etiqueta_suspendida' : emp.activa ? 'etiqueta_activa' : 'etiqueta_suspendida';
       const texto_estado = emp.vencida ? 'Vencida' : emp.activa ? 'Activa' : 'Suspendida';
 
+      // Serializa los nodos para pasarlos al onclick de verKeys
+      const nodos_json = JSON.stringify(emp.nodos || []).replace(/"/g, '&quot;');
+
       return `
         <tr id="fila_empresa_${emp._id}">
           <td><strong>${emp.nombre}</strong></td>
@@ -196,8 +242,15 @@ async function cargarEmpresas(buscar = '') {
           <td>${emp.contrato?.meses || '—'} mes(es)</td>
           <td>${html_dias}</td>
           <td>${emp.totalUsuarios}</td>
+          <td>${emp.totalNodos || 0}</td>
+          <td>
+            <!-- botón que abre el modal con las apiKeys de los nodos -->
+            <button class="btn boton_toggle"
+              onclick="verKeys('${emp._id}', '${emp.nombre}', '${nodos_json}')">
+              Ver keys
+            </button>
+          </td>
           <td>${formatearFecha(emp.ultimaMedicion)}</td>
-          <td><code class="clave_acceso">${emp.claveAcceso || '—'}</code></td>
           <td><span class="${clase_estado}">${texto_estado}</span></td>
           <td>
             <div class="d-flex gap-1 flex-wrap">
@@ -221,10 +274,26 @@ async function cargarEmpresas(buscar = '') {
   }
 }
 
+// Abre el modal con las apiKeys de los nodos de una empresa
+function verKeys(id, nombre, nodos_string) {
+  const nodos = JSON.parse(nodos_string.replace(/&quot;/g, '"'));
+
+  document.getElementById('titulo_modal_keys').textContent = `API Keys — ${nombre}`;
+  document.getElementById('lista_keys').innerHTML = nodos.map(n => `
+    <div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:14px; margin-bottom:10px;">
+      <p class="etiqueta_campo mb-1" style="color:#952ecc; font-weight:600;">${n.nombre}
+        ${n.alturaCm ? `<span style="color:#555; font-weight:normal;"> · ${n.alturaCm} cm</span>` : ''}
+      </p>
+      <code style="word-break:break-all; color:#e0e0e0; font-size:0.8rem;">${n.apiKey}</code>
+    </div>`).join('');
+
+  new bootstrap.Modal(document.getElementById('modal_keys')).show();
+}
+
 // Muestra empresas vencidas o con ≤5 días en la sección de alertas
 function renderizarAlertas(empresas) {
   const contenedor = document.getElementById('contenedor_alertas');
-  const alertas = empresas.filter(e => e.porVencer || e.vencida);
+  const alertas    = empresas.filter(e => e.porVencer || e.vencida);
 
   if (alertas.length === 0) {
     contenedor.innerHTML = '<p class="texto_cargando">Sin alertas activas ✓</p>';
@@ -248,7 +317,7 @@ function renderizarAlertas(empresas) {
                 ${emp.vencida ? 'Vencido' : emp.diasRestantes + ' días'}
               </span></td>
               <td><span class="${emp.vencida ? 'etiqueta_suspendida' : emp.activa ? 'etiqueta_activa' : 'etiqueta_suspendida'}">
-              ${emp.vencida ? 'Vencida' : emp.activa ? 'Activa' : 'Suspendida'}
+                ${emp.vencida ? 'Vencida' : emp.activa ? 'Activa' : 'Suspendida'}
               </span></td>
               <td>
                 ${emp.gerente?.correo
@@ -266,14 +335,14 @@ function renderizarAlertas(empresas) {
 
 // Cargar gerentes
 async function cargarGerentes(buscar = '') {
-  const tbody = document.getElementById('filas_gerentes');
+  const tbody     = document.getElementById('filas_gerentes');
   const div_error = document.getElementById('error_gerentes');
 
   try {
     const url = buscar
       ? `/api/admin/gerentes?buscar=${encodeURIComponent(buscar)}`
       : '/api/admin/gerentes';
-    const res = await fetch(url, { headers: encabezados() });
+    const res     = await fetch(url, { headers: encabezados() });
     const gerentes = await res.json();
 
     document.getElementById('total_gerentes').textContent = gerentes.length;

@@ -51,11 +51,15 @@
 
   <main class="container-fluid contenido_principal">
 
-    <h2 class="titulo_seccion mb-3">Datos actuales</h2>
+    <!-- Tabs por nodo — se renderizan dinámicamente en dashboard.js -->
+    <!-- Si la empresa tiene 1 solo nodo, este contenedor queda vacío y no se ve -->
+    <div id="contenedor_tabs" class="mb-4"></div>
+
+    <h2 class="titulo_seccion mb-3" id="titulo_datos_actuales">Datos actuales</h2>
 
     <!-- Tarjetas de estado -->
     <div class="row g-3 mb-4">
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-md-3">
         <div class="tarjeta_medicion" id="tarjeta_ph">
           <p class="etiqueta_medicion">pH</p>
           <p class="valor_medicion" id="valor_ph">--</p>
@@ -63,7 +67,7 @@
           <span class="indicador_estado" id="indicador_ph">--</span>
         </div>
       </div>
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-md-3">
         <div class="tarjeta_medicion" id="tarjeta_temp">
           <p class="etiqueta_medicion">Temperatura</p>
           <p class="valor_medicion" id="valor_temp">--</p>
@@ -71,7 +75,20 @@
           <span class="indicador_estado" id="indicador_temp">--</span>
         </div>
       </div>
-      <div class="col-12 col-md-4">
+      <!-- tarjeta de nivel de llenado -->
+      <div class="col-12 col-md-3">
+        <div class="tarjeta_medicion" id="tarjeta_nivel">
+          <p class="etiqueta_medicion">Nivel de llenado</p>
+          <p class="valor_medicion" id="valor_nivel">--</p>
+          <p class="rango_medicion">Mínimo recomendado: 20%</p>
+          <!-- Barra visual de llenado -->
+          <div class="barra_nivel_contenedor">
+            <div class="barra_nivel_relleno" id="barra_nivel"></div>
+          </div>
+          <span class="indicador_estado" id="indicador_nivel">--</span>
+        </div>
+      </div>
+      <div class="col-12 col-md-3">
         <div class="tarjeta_medicion" id="tarjeta_estado">
           <p class="etiqueta_medicion">Estado del Lote</p>
           <p class="valor_medicion" id="icono_estado">--</p>
@@ -94,12 +111,13 @@
               <th>Cambio de pH</th>
               <th>Temperatura</th>
               <th>Cambio de Temp</th>
+              <th>Nivel</th>
               <th>Tiempo desde anterior</th>
               <th>Estado</th>
             </tr>
           </thead>
           <tbody id="filas_mediciones">
-            <tr><td colspan="8" class="texto_cargando">Cargando datos...</td></tr>
+            <tr><td colspan="9" class="texto_cargando">Cargando datos...</td></tr>
           </tbody>
         </table>
       </div>
@@ -110,14 +128,19 @@
     <div class="seccion_tabla mb-4">
       <h2 class="titulo_seccion mb-3">Gráficas de los datos</h2>
       <div class="row g-3">
-        <div class="col-12 col-lg-6">
+        <div class="col-12 col-lg-4">
           <div class="contenedor_grafica">
             <canvas id="grafica_ph"></canvas>
           </div>
         </div>
-        <div class="col-12 col-lg-6">
+        <div class="col-12 col-lg-4">
           <div class="contenedor_grafica">
             <canvas id="grafica_temp"></canvas>
+          </div>
+        </div>
+        <div class="col-12 col-lg-4">
+          <div class="contenedor_grafica">
+            <canvas id="grafica_nivel"></canvas>
           </div>
         </div>
       </div>

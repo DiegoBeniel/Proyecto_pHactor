@@ -20,7 +20,7 @@ router.use(verificarToken, soloAdmin);
 // Admin crea una empresa y su gerente desde el panel
 router.post('/empresas', async (req, res) => {
   try {
-    const { nombreEmpresa, mesesContrato, gerenteNombre, gerenteEmail, gerenteTelefono } = req.body;
+    const { nombreEmpresa, mesesContrato, nodos, gerenteNombre, gerenteEmail, gerenteTelefono } = req.body;
 
     if (!nombreEmpresa || !mesesContrato || !gerenteNombre || !gerenteEmail)
       return res.status(400).json({ error: 'Todos los campos son requeridos' });
@@ -33,11 +33,19 @@ router.post('/empresas', async (req, res) => {
 
     const tempPassword = crypto.randomBytes(4).toString('hex');
 
+    const nodosArray = Array.isArray(nodos)
+  ? nodos.map((n, i) => ({
+      nombre: n.nombre?.trim() || `Nodo ${i + 1}`,
+      alturaCm: n.alturaCm ? Number(n.alturaCm) : null
+    }))
+  : [{ nombre: 'Nodo 1', capacidadLitros: null }];
+    
     const empresa = new Empresa({
-      nombre: nombreEmpresa,
+      nombre:nombreEmpresa,
+      nodos:nodosArray,
       contrato: { meses: Number(mesesContrato) },
-      gerente: { nombre: gerenteNombre, correo: gerenteEmail, telefono: gerenteTelefono }
-    });
+      gerente:  { nombre: gerenteNombre, correo: gerenteEmail, telefono: gerenteTelefono }
+});
     await empresa.save();
 
     const gerente = new Usuario({
@@ -52,7 +60,8 @@ router.post('/empresas', async (req, res) => {
 
     await enviarPasswordProvisional(gerenteEmail, gerenteNombre, tempPassword);
 
-    res.json({ mensaje: `Empresa "${nombreEmpresa}" creada. Contraseña enviada al gerente.`, empresa });
+    res.json({
+      mensaje: `Empresa "${nombreEmpresa}" creada con ${nodosArray.length} nodo(s). Contraseña enviada al gerente.`, empresa});
 
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -77,8 +86,17 @@ router.get('/empresas', async (req, res) => {
       return {
         _id: emp._id,
         nombre: emp.nombre,
-        apiKey: emp.apiKey,
-        claveAcceso: emp.claveAcceso,
+
+        // admin ve nodos con sus apiKeys para programar los ESP32
+        nodos: emp.nodos.map(n => ({
+          nombre: n.nombre,
+          alturaCm: n.alturaCm,
+          apiKey: n.apiKey,
+          activo: n.activo
+        })),
+        totalNodos: emp.nodos.length,
+// claveAcceso no se manda al admin, eso es del gerente con sus usuarios
+
         activa: emp.activa,
         contrato: emp.contrato,
         diasRestantes: dias,
