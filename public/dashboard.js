@@ -142,11 +142,11 @@ let nodo_activo = null;
 // Carga los nodos de la empresa y dibuja los tabs
 async function inicializarTabs() {
   try {
-    const res = await fetch('/api/gerente/mi-empresa', { headers: encabezados() });
+    const res = await fetch('/api/gerente/nodos', { headers: encabezados() });
     if (!res.ok) return; // si falla silenciosamente no rompemos el dashboard
-
-    const emp = await res.json();
-    const nodos = emp.nodos || [];
+    
+    const data = await res.json();
+    const nodos = data.nodos || [];
 
     // Con 1 solo nodo no se muestran tabs, el nodo activo queda en null (sin filtro)
     if (nodos.length <= 1) {
@@ -185,7 +185,7 @@ function cambiarNodo(nombre, indice, total) {
   }
 
   // Actualiza el título de la sección
-  document.getElementById('titulo_datos_actuales').textContent = `Datos actuales — ${nombre}`;
+  document.getElementById('titulo_datos_actuales').textContent = `Datos actuales del ${nombre}`;
 
   // Resetea el ID conocido para forzar recarga completa al cambiar de nodo
   ultima_id_conocida = null;
@@ -299,7 +299,7 @@ async function cargarDatos() {
       const ph_ok= ultima.ph >= 5.0 && ultima.ph <= 7.0;
       const temp_ok = ultima.temperatura >= 20 && ultima.temperatura <= 40;
       // nivel ok si está por encima de 80% o si no tiene sensor (null)
-      const nivel_ok = ultima.nivel === null || ultima.nivel === undefined || ultima.nivel >= 20;
+      const nivel_ok = ultima.nivel === null || ultima.nivel === undefined || ultima.nivel >= 80;
       const todo_ok  = ph_ok && temp_ok && nivel_ok;
 
       document.getElementById('valor_ph').textContent = Number(ultima.ph).toFixed(2);

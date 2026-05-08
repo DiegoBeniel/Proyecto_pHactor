@@ -79,7 +79,7 @@ document.getElementById('btn_guardar_nombre').addEventListener('click', async ()
   }
 });
 
-// ── CARGAR DATOS DE LA EMPRESA ────────────────────────────────────────
+// Cargar los datos de la empresa
 async function cargarEmpresa() {
   try {
     const res = await fetch('/api/gerente/mi-empresa', { headers: encabezados() });
@@ -88,9 +88,8 @@ async function cargarEmpresa() {
 
     const emp = await res.json();
 
-    document.getElementById('nombre_empresa').textContent  = emp.nombre || '—';
-    document.getElementById('clave_acceso').textContent    = emp.claveAcceso || '—';
-    document.getElementById('api_key').textContent         = emp.apiKey || '—';
+    document.getElementById('nombre_empresa').textContent= emp.nombre || '—';
+    document.getElementById('clave_acceso').textContent= emp.claveAcceso || '—';
 
     const fin = emp.contrato?.fin
       ? new Date(emp.contrato.fin).toLocaleDateString('es-MX')
@@ -222,7 +221,7 @@ async function toggleUsuario(id, esta_activo) {
   }
 }
 
-// ── ELIMINAR USUARIO ──────────────────────────────────────────────────
+// Eliminar usuario
 async function eliminarUsuario(id, nombre) {
   if (!confirm(`¿Eliminar a "${nombre}"? Esta acción no se puede deshacer.`)) return;
 

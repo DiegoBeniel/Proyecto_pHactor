@@ -15,7 +15,7 @@ const medicionSchema = new mongoose.Schema({
 medicionSchema.pre('save', function () {
   const phFuera= this.ph < 5.0 || this.ph > 7.0;
   const tempFuera= this.temperatura < 20 || this.temperatura > 40;
-  const nivelFuera = this.nivel !== null && this.nivel < 80; // alerta si baja de 20%
+  const nivelFuera = this.nivel !== null && this.nivel < 80; // alerta si baja de 80%
   this.estado = (phFuera || tempFuera || nivelFuera) ? 'ALERTA' : 'OK';
 });
 

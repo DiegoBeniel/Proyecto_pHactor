@@ -212,7 +212,7 @@ async function cargarEmpresas(buscar = '') {
     const empresas = await res.json();
 
     document.getElementById('total_empresas').textContent   = empresas.length;
-    document.getElementById('empresas_activas').textContent = empresas.filter(e => e.activa).length;
+    document.getElementById('empresas_activas').textContent = empresas.filter(e => e.activa && !e.vencida).length;
 
     if (empresas.length === 0) {
       tbody.innerHTML = '<tr><td colspan="10" class="texto_cargando">No hay empresas registradas</td></tr>';

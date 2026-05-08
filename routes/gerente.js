@@ -13,6 +13,22 @@ function soloGerente(req, res, next) {
   next();
 }
 
+// Ruta pública para cualquier usuario autenticado — el dashboard la necesita
+router.get('/nodos', verificarToken, async (req, res) => {
+  try {
+    const empresa = await Empresa.findById(req.usuario.empresa);
+    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+
+    res.json({
+      nodos: empresa.nodos.map(n => ({ nombre: n.nombre, activo: n.activo }))
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.use(verificarToken, soloGerente); // desde aquí solo gerentes
+
 router.use(verificarToken, soloGerente);
 
 // GET /api/gerente/mi-empresa
@@ -128,6 +144,22 @@ router.delete('/usuarios/:id', async (req, res) => {
 
     await Usuario.findByIdAndDelete(req.params.id);
     res.json({ mensaje: 'Usuario eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/gerente/nodos - accesible para cualquier rol autenticado
+// El dashboard de usuario lo usa para saber cuántos nodos tiene la empresa
+router.get('/nodos', async (req, res) => {
+  try {
+    const empresa = await Empresa.findById(req.usuario.empresa);
+    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+
+    // Solo devuelve nombre y activo - sin apiKey
+    res.json({
+      nodos: empresa.nodos.map(n => ({ nombre: n.nombre, activo: n.activo }))
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
