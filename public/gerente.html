@@ -77,44 +77,62 @@
     <div class="seccion mb-4">
       <h2 class="titulo_seccion mb-3">Datos de tu empresa</h2>
       <div class="row g-3">
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6">
           <p class="etiqueta_campo mb-1">Clave de acceso para usuarios</p>
           <code class="clave_acceso" id="clave_acceso">--</code>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6">
           <p class="etiqueta_campo mb-1">Contrato hasta</p>
           <span id="fecha_fin_contrato" class="texto_dato">--</span>
         </div>
       </div>
     </div>
 
-    <!-- Agregar usuario -->
+    <!--Nodos de la empresa -->
     <div class="seccion mb-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="titulo_seccion">Agregar usuario</h2>
-        <button class="btn boton_toggle" data-bs-toggle="collapse" data-bs-target="#form_agregar">
-          Mostrar / ocultar
-        </button>
+        <h2 class="titulo_seccion">Nodos / Tambos</h2>
+        <button class="btn boton_toggle" onclick="cargarNodos()">Actualizar</button>
       </div>
-      <div id="form_agregar" class="collapse show">
-        <div id="error_agregar" class="alert alerta_error d-none"></div>
-        <div id="exito_agregar" class="alert alerta_exito d-none"></div>
-        <div class="row g-3">
-          <div class="col-12 col-md-6 col-lg-3">
-            <label class="form-label etiqueta_campo">Nombre del usuario</label>
-            <input type="text" id="campo_u_nombre" class="form-control campo_entrada" placeholder="Juan Pérez">
-          </div>
-          <div class="col-12 col-md-6 col-lg-3">
-            <label class="form-label etiqueta_campo">Correo</label>
-            <input type="email" id="campo_u_email" class="form-control campo_entrada" placeholder="juan@correo.com">
-          </div>
-          <div class="col-12 col-md-6 col-lg-3">
-            <label class="form-label etiqueta_campo">Teléfono</label>
-            <input type="tel" id="campo_u_tel" class="form-control campo_entrada" placeholder="33 1234 5678">
-          </div>
-          <div class="col-12 col-md-6 col-lg-3 d-flex align-items-end">
-            <button id="btn_agregar_usuario" class="btn boton_principal w-100">Agregar y enviar contraseña</button>
-          </div>
+      <div id="error_nodos" class="alert alerta_error d-none"></div>
+      <div class="table-responsive">
+        <table class="table table-dark tabla_datos">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Altura (cm)</th>
+              <th>Último estado</th>
+              <th>Estado del nodo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="filas_nodos">
+            <tr><td colspan="5" class="texto_cargando">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Agregar usuario — sin collapse, siempre visible -->
+    <div class="seccion mb-4">
+      <h2 class="titulo_seccion mb-3">Agregar usuario</h2>
+      <div id="error_agregar" class="alert alerta_error d-none"></div>
+      <div id="exito_agregar" class="alert alerta_exito d-none"></div>
+      <div class="row g-3">
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label etiqueta_campo">Nombre del usuario</label>
+          <input type="text" id="campo_u_nombre" class="form-control campo_entrada" placeholder="Juan Pérez">
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label etiqueta_campo">Correo</label>
+          <input type="email" id="campo_u_email" class="form-control campo_entrada" placeholder="juan@correo.com">
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label etiqueta_campo">Teléfono</label>
+          <input type="tel" id="campo_u_tel" class="form-control campo_entrada" placeholder="33 1234 5678">
+        </div>
+        <div class="col-12 col-md-6 col-lg-3 d-flex align-items-end">
+          <button id="btn_agregar_usuario" class="btn boton_principal w-100">Agregar y enviar contraseña</button>
         </div>
       </div>
     </div>

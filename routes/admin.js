@@ -199,4 +199,32 @@ router.delete('/usuarios/:id', async (req, res) => {
   }
 });
 
+// POST /api/admin/empresas/:id/nodos
+// Admin agrega un nodo nuevo a una empresa existente
+router.post('/empresas/:id/nodos', async (req, res) => {
+  try {
+    const { nombre, alturaCm } = req.body;
+    if (!nombre) return res.status(400).json({ error: 'El nombre del nodo es requerido' });
+
+    const empresa = await Empresa.findById(req.params.id);
+    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+
+    if (empresa.nodos.find(n => n.nombre === nombre))
+      return res.status(400).json({ error: 'Ya existe un nodo con ese nombre' });
+
+    empresa.nodos.push({
+      nombre,
+      alturaCm: alturaCm ? Number(alturaCm) : null
+    });
+    await empresa.save();
+
+    // Devuelve el nodo recién creado con su apiKey generada
+    const nodo_nuevo = empresa.nodos[empresa.nodos.length - 1];
+    res.json({ mensaje: `Nodo "${nombre}" agregado`, nodo: nodo_nuevo });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

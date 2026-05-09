@@ -272,10 +272,15 @@ async function cargarEmpresas(buscar = '') {
 }
 
 // Abre el modal con las apiKeys y altura de los nodos de una empresa
+// ID de la empresa actualmente abierta en el modal de keys
+let empresa_keys_activa = null;
 function verKeys(id, nombre, nodos_string) {
   const nodos = JSON.parse(nodos_string.replace(/&quot;/g, '"'));
 
-  document.getElementById('titulo_modal_keys').textContent = `API Keys — ${nombre}`;
+  // Guarda el id para usarlo al agregar nodo
+  empresa_keys_activa = id;
+
+  document.getElementById('titulo_modal_keys').textContent = `API Keys. Enviar en el header x-api-key. ${nombre}`;
   document.getElementById('lista_keys').innerHTML = nodos.map(n => `
     <div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:14px; margin-bottom:10px;">
       <p class="etiqueta_campo mb-1" style="color:#952ecc; font-weight:600;">${n.nombre}
@@ -283,6 +288,12 @@ function verKeys(id, nombre, nodos_string) {
       </p>
       <code style="word-break:break-all; color:#e0e0e0; font-size:0.8rem;">${n.apiKey}</code>
     </div>`).join('');
+
+  // Limpia el formulario de agregar nodo al abrir
+  document.getElementById('nuevo_nodo_nombre').value = '';
+  document.getElementById('nuevo_nodo_altura').value = '';
+  document.getElementById('error_agregar_nodo').classList.add('d-none');
+  document.getElementById('exito_agregar_nodo').classList.add('d-none');
 
   new bootstrap.Modal(document.getElementById('modal_keys')).show();
 }
@@ -407,7 +418,7 @@ async function renovarContrato(id, nombre) {
     const data = await res.json();
 
     if (!res.ok) { alert(data.error || 'Error al renovar.'); return; }
-    alert(`✓ ${data.mensaje}`);
+    alert(`Listo ${data.mensaje}`);
     await cargarTodo();
 
   } catch {
@@ -437,6 +448,54 @@ async function eliminarUsuario(id, nombre) {
 async function cargarTodo() {
   await Promise.all([cargarEmpresas(), cargarGerentes()]);
 }
+// Agregar nodo desde el modal de keys
+document.getElementById('btn_agregar_nodo').addEventListener('click', async () => {
+  const nombre = document.getElementById('nuevo_nodo_nombre').value.trim();
+  const alturaCm = document.getElementById('nuevo_nodo_altura').value;
 
+  const div_error = document.getElementById('error_agregar_nodo');
+  const div_exito = document.getElementById('exito_agregar_nodo');
+  div_error.classList.add('d-none');
+  div_exito.classList.add('d-none');
+
+  if (!nombre) return mostrarMensaje(div_error, 'El nombre del nodo es obligatorio.');
+  if (!empresa_keys_activa) return mostrarMensaje(div_error, 'Error: no se identificó la empresa.');
+
+  const btn = document.getElementById('btn_agregar_nodo');
+  btn.disabled = true;
+  btn.textContent = 'Agregando...';
+
+  try {
+    const res  = await fetch(`/api/admin/empresas/${empresa_keys_activa}/nodos`, {
+      method: 'POST', headers: encabezados(),
+      body: JSON.stringify({ nombre, alturaCm: alturaCm ? Number(alturaCm) : null })
+    });
+    const data = await res.json();
+
+    if (!res.ok) return mostrarMensaje(div_error, data.error || 'Error al agregar el nodo.');
+
+    mostrarMensaje(div_exito, `Listo ${data.mensaje}. API Key generada.`);
+    document.getElementById('nuevo_nodo_nombre').value = '';
+    document.getElementById('nuevo_nodo_altura').value = '';
+
+    // Agrega el nuevo nodo a la lista sin cerrar el modal
+    document.getElementById('lista_keys').innerHTML += `
+      <div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:14px; margin-bottom:10px;">
+        <p class="etiqueta_campo mb-1" style="color:#952ecc; font-weight:600;">${data.nodo.nombre}
+          ${data.nodo.alturaCm ? `<span style="color:#555; font-weight:normal;"> · ${data.nodo.alturaCm} cm</span>` : ''}
+        </p>
+        <code style="word-break:break-all; color:#e0e0e0; font-size:0.8rem;">${data.nodo.apiKey}</code>
+      </div>`;
+
+    // Actualiza la tabla de empresas en el fondo
+    await cargarTodo();
+
+  } catch {
+    mostrarMensaje(div_error, 'No se pudo conectar con el servidor.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Agregar';
+  }
+});
 // Arranque
 cargarTodo();

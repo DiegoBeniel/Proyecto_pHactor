@@ -124,6 +124,24 @@
       <div class="modal-content caja_modal">
         <div class="modal-header borde_modal">
           <h5 class="modal-title titulo_modal" id="titulo_modal_keys">API Keys</h5>
+          <!-- Agregar nodo nuevo a la empresa -->
+           <hr style="border-color:#333; margin:16px 0;">
+           <p class="etiqueta_campo mb-2" style="color:#952ecc; font-weight:600;">Agregar nodo</p>
+           <div id="error_agregar_nodo" class="alert alerta_error d-none"></div>
+           <div id="exito_agregar_nodo" class="alert alerta_exito d-none"></div>
+           <div class="row g-2">
+                        <div class="col-12 col-md-5">
+                           <input type="text" id="nuevo_nodo_nombre" class="form-control campo_entrada"
+                           placeholder="Ej: Tambo Norte">
+                          </div>
+                          <div class="col-12 col-md-4">
+                            <input type="number" id="nuevo_nodo_altura" class="form-control campo_entrada"
+                            placeholder="Altura (cm)" min="1">
+                          </div>
+                          <div class="col-12 col-md-3">
+                            <button id="btn_agregar_nodo" class="btn boton_principal w-100">Agregar</button>
+                          </div>
+                        </div>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
