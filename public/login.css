@@ -84,11 +84,21 @@ main {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
 }
 
 .btn_principal:hover { opacity: 0.85; color: #fff; }
 .btn_principal:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn_regresar {
+  color: #5b0281;
+  background-color: #cca8e0;
+  font-size: 0.85rem;
+  text-decoration: none;
+  border: 1px solid #952ecc;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
 
 .texto_link {
   text-align: center;
@@ -122,7 +132,6 @@ main {
   margin-bottom: 16px;
 }
 
-/* ── Footer ── */
 .footer_login {
   background: #111;
   color: #555;
