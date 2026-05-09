@@ -13,7 +13,7 @@ document.getElementById('btn_cerrar_sesion').addEventListener('click', () => {
 // Headers para todas las peticiones autenticadas
 function encabezados() {
   return {
-    'Content-Type':  'application/json',
+    'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
   };
 }
@@ -29,7 +29,7 @@ function abrirModalNombre() {
 }
 
 document.getElementById('btn_guardar_nombre').addEventListener('click', async () => {
-  const nombre    = document.getElementById('campo_nuevo_nombre').value.trim();
+  const nombre = document.getElementById('campo_nuevo_nombre').value.trim();
   const div_error = document.getElementById('error_modal_nombre');
   const div_exito = document.getElementById('exito_modal_nombre');
   div_error.classList.add('d-none');
@@ -117,7 +117,7 @@ function actualizarReloj() {
 function estilizarTarjeta(id_tarjeta, id_indicador, en_rango) {
   document.getElementById(id_tarjeta).className = 'tarjeta_medicion ' + (en_rango ? 'en_rango' : 'fuera_rango');
   const ind = document.getElementById(id_indicador);
-  ind.className   = 'indicador_estado ' + (en_rango ? 'indicador_ok' : 'indicador_alerta');
+  ind.className = 'indicador_estado ' + (en_rango ? 'indicador_ok' : 'indicador_alerta');
   ind.textContent = en_rango ? 'En rango' : 'Fuera de rango';
 }
 
@@ -138,6 +138,34 @@ function formatearDelta(val) {
 
 // nodo seleccionado actualmente (null = primer nodo por defecto)
 let nodo_activo = null;
+
+// Rangos óptimos de la empresa — se cargan al inicio desde la API
+let rangos = {
+  ph: { min: 5.0, max: 7.0 },
+  temp: { min: 20,  max: 40  },
+  nivelMinimo: 80
+};
+
+async function cargarRangos() {
+  try {
+    const res  = await fetch('/api/gerente/rangos', { headers: encabezados() });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.rangosOptimos) {
+      rangos = data.rangosOptimos;
+
+      // Actualizar los textos de rango visibles en las tarjetas
+      document.getElementById('rango_ph_texto').textContent =
+        `Rango óptimo: ${rangos.ph.min} – ${rangos.ph.max}`;
+      document.getElementById('rango_temp_texto').textContent =
+        `Rango óptimo: ${rangos.temp.min}°C – ${rangos.temp.max}°C`;
+      document.getElementById('rango_nivel_texto').textContent =
+        `Mínimo recomendado: ${rangos.nivelMinimo}%`;
+    }
+  } catch {
+    // silencioso, el dashboard sigue funcionando con los defaults
+  }
+}
 
 // Carga los nodos de la empresa y dibuja los tabs
 async function inicializarTabs() {
@@ -270,7 +298,7 @@ const grafica_nivel = new Chart(document.getElementById('grafica_nivel'), {
 // ID de la última medición conocida para no rerenderizar sin cambios
 let ultima_id_conocida = null;
 
-// Cargar datos — ahora filtra por nodo_activo si hay más de uno
+// Cargar datos, filtra por nodo_activo si hay más de uno
 async function cargarDatos() {
   try {
     // Agrega ?nodo=... si hay un nodo seleccionado
@@ -296,10 +324,10 @@ async function cargarDatos() {
       'Actualizado: ' + new Date().toLocaleTimeString('es-MX') + ' — solo cambia si hay datos nuevos';
 
     if (ultima && ultima.ph !== undefined) {
-      const ph_ok= ultima.ph >= 5.0 && ultima.ph <= 7.0;
-      const temp_ok = ultima.temperatura >= 20 && ultima.temperatura <= 40;
-      // nivel ok si está por encima de 80% o si no tiene sensor (null)
-      const nivel_ok = ultima.nivel === null || ultima.nivel === undefined || ultima.nivel >= 80;
+      const ph_ok = ultima.ph >= rangos.ph.min && ultima.ph <= rangos.ph.max;
+      const temp_ok = ultima.temperatura >= rangos.temp.min && ultima.temperatura <= rangos.temp.max;
+      // nivel ok si está por encima del mínimo configurado, o si no tiene sensor (null)
+      const nivel_ok = ultima.nivel === null || ultima.nivel === undefined || ultima.nivel >= (rangos.nivelMinimo ?? 80);
       const todo_ok  = ph_ok && temp_ok && nivel_ok;
 
       document.getElementById('valor_ph').textContent = Number(ultima.ph).toFixed(2);
@@ -315,11 +343,6 @@ async function cargarDatos() {
       if (ultima.nivel !== null && ultima.nivel !== undefined) {
         const pct = Math.min(Math.max(Number(ultima.nivel), 0), 100);
         document.getElementById('valor_nivel').textContent = pct.toFixed(1) + '%';
-
-        // Barra de llenado: color según nivel
-        const barra = document.getElementById('barra_nivel');
-        barra.style.width = pct + '%';
-        barra.style.background = nivel_ok ? '#2ecc71' : '#e74c3c';
 
         estilizarTarjeta('tarjeta_nivel', 'indicador_nivel', nivel_ok);
       } else {
@@ -392,8 +415,8 @@ async function cargarDatos() {
 
 actualizarReloj();
 
-// primero inicializa los tabs, luego carga datos
-inicializarTabs().then(() => cargarDatos());
+// primero carga los rangos, luego los tabs, luego los datos
+cargarRangos().then(() => inicializarTabs()).then(() => cargarDatos());
 
 // Reloj cada segundo
 setInterval(actualizarReloj, 1000);

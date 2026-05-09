@@ -3,40 +3,48 @@ const router = express.Router();
 const crypto = require('crypto');
 const Usuario = require('../models/Usuario');
 const Empresa = require('../models/Empresa');
-const Medicion = require('../models/Medicion');
 const verificarToken = require('../middleware/auth');
 const { enviarPasswordProvisional } = require('../utils/mailer');
 
-// Middleware: solo gerente o admin
+// Middleware: solo gerente
 function soloGerente(req, res, next) {
   if (!['gerente', 'admin'].includes(req.usuario.rol))
     return res.status(403).json({ error: 'Acceso denegado.' });
   next();
 }
 
-// GET /api/gerente/nodos — accesible para cualquier rol autenticado
-// El dashboard de usuario lo usa para saber cuántos nodos tiene la empresa
+// Ruta pública para cualquier usuario autenticado — el dashboard la necesita
 router.get('/nodos', verificarToken, async (req, res) => {
   try {
     const empresa = await Empresa.findById(req.usuario.empresa);
     if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
 
     res.json({
-      nodos: empresa.nodos.map(n => ({
-        nombre: n.nombre,
-        alturaCm: n.alturaCm,
-        activo: n.activo
-      }))
+      nodos: empresa.nodos.map(n => ({ nombre: n.nombre, activo: n.activo }))
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Desde aquí solo gerentes o admin
+// Ruta pública para cualquier usuario autenticado — el dashboard la necesita para colorear tarjetas
+router.get('/rangos', verificarToken, async (req, res) => {
+  try {
+    const empresa = await Empresa.findById(req.usuario.empresa);
+    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+
+    res.json({ rangosOptimos: empresa.rangosOptimos });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.use(verificarToken, soloGerente); // desde aquí solo gerentes
+
 router.use(verificarToken, soloGerente);
 
 // GET /api/gerente/mi-empresa
+// Datos de su empresa incluyendo contrato y días restantes
 router.get('/mi-empresa', async (req, res) => {
   try {
     const empresa = await Empresa.findById(req.usuario.empresa);
@@ -46,100 +54,27 @@ router.get('/mi-empresa', async (req, res) => {
 
     res.json({
       _id: empresa._id,
-      nombre:  empresa.nombre,
-      claveAcceso:empresa.claveAcceso,
-      activa:empresa.activa,
+      nombre: empresa.nombre,
+      claveAcceso: empresa.claveAcceso,
+      apiKey: empresa.apiKey,
+      activa: empresa.activa,
       contrato: empresa.contrato,
       diasRestantes: dias,
       porVencer: dias !== null && dias <= 5 && dias >= 0,
-      vencida: dias !== null && dias < 0,
-      nodos: empresa.nodos.map(n => ({ nombre: n.nombre, alturaCm: n.alturaCm, activo: n.activo })),
-      totalNodos: empresa.nodos.length
+      vencida: dias !== null && dias < 0
     });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// GET /api/gerente/nodos-detalle
-// Nodos con su última medición y estado del lote — para el panel del gerente
-router.get('/nodos-detalle', async (req, res) => {
-  try {
-    const empresa = await Empresa.findById(req.usuario.empresa);
-    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
-
-    const nodos = await Promise.all(empresa.nodos.map(async (n) => {
-      // Busca la última medición de cada nodo para mostrar el estado del lote
-      const ultima = await Medicion.findOne({
-        empresa:    empresa._id,
-        nodoNombre: n.nombre
-      }).sort({ fecha: -1 });
-
-      return {
-        nombre: n.nombre,
-        alturaCm: n.alturaCm,
-        activo: n.activo,
-        ultimoEstado: ultima?.estado || null, // 'OK', 'ALERTA' o null si no hay datos aún
-        ultimaFecha:  ultima?.fecha  || null
-      };
-    }));
-
-    res.json({ nodos });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// PATCH /api/gerente/nodos/:nombre/toggle
-// Activa o suspende un nodo de la empresa
-router.patch('/nodos/:nombre/toggle', async (req, res) => {
-  try {
-    const empresa = await Empresa.findById(req.usuario.empresa);
-    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
-
-    const nodo = empresa.nodos.find(n => n.nombre === req.params.nombre);
-    if (!nodo) return res.status(404).json({ error: 'Nodo no encontrado' });
-
-    nodo.activo = !nodo.activo;
-    await empresa.save();
-
-    res.json({
-      mensaje: `Nodo "${nodo.nombre}" ${nodo.activo ? 'activado' : 'suspendido'}`,
-      activo:  nodo.activo
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// DELETE /api/gerente/nodos/:nombre
-// Elimina un nodo y todas sus mediciones
-router.delete('/nodos/:nombre', async (req, res) => {
-  try {
-    const empresa = await Empresa.findById(req.usuario.empresa);
-    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
-
-    const indice = empresa.nodos.findIndex(n => n.nombre === req.params.nombre);
-    if (indice === -1) return res.status(404).json({ error: 'Nodo no encontrado' });
-
-    empresa.nodos.splice(indice, 1);
-    await empresa.save();
-
-    // Borra también las mediciones de ese nodo
-    await Medicion.deleteMany({ empresa: empresa._id, nodoNombre: req.params.nombre });
-
-    res.json({ mensaje: `Nodo "${req.params.nombre}" eliminado correctamente` });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 // GET /api/gerente/usuarios
+// Lista los usuarios de su empresa
 router.get('/usuarios', async (req, res) => {
   try {
     const usuarios = await Usuario.find({
       empresa: req.usuario.empresa,
-      rol:     'usuario'
+      rol: 'usuario'
     })
       .select('-password')
       .sort({ fechaCreacion: -1 });
@@ -151,6 +86,7 @@ router.get('/usuarios', async (req, res) => {
 });
 
 // POST /api/gerente/usuarios
+// El gerente agrega un usuario a su empresa y le manda la contraseña
 router.post('/usuarios', async (req, res) => {
   try {
     const { nombre, email, telefono } = req.body;
@@ -168,8 +104,8 @@ router.post('/usuarios', async (req, res) => {
       email,
       telefono: telefono || '',
       password: tempPassword,
-      rol:      'usuario',
-      empresa:  req.usuario.empresa
+      rol: 'usuario',
+      empresa: req.usuario.empresa
     });
     await usuario.save();
 
@@ -183,12 +119,13 @@ router.post('/usuarios', async (req, res) => {
 });
 
 // PATCH /api/gerente/usuarios/:id/toggle
+// Activa o desactiva un usuario de su empresa
 router.patch('/usuarios/:id/toggle', async (req, res) => {
   try {
     const usuario = await Usuario.findOne({
-      _id:     req.params.id,
+      _id: req.params.id,
       empresa: req.usuario.empresa,
-      rol:     'usuario'
+      rol: 'usuario'
     });
 
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -198,27 +135,90 @@ router.patch('/usuarios/:id/toggle', async (req, res) => {
 
     res.json({
       mensaje: `Usuario ${usuario.activo ? 'activado' : 'desactivado'}`,
-      activo:  usuario.activo
+      activo: usuario.activo
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// DELETE /api/gerente/usuarios/:id
+//DELETE /api/gerente/usuarios/:id
+// El gerente elimina un usuario de su empresa
 router.delete('/usuarios/:id', async (req, res) => {
   try {
     const usuario = await Usuario.findOne({
-      _id:     req.params.id,
+      _id: req.params.id,
       empresa: req.usuario.empresa,
-      rol:     'usuario'
+      rol: 'usuario'
     });
 
-    if (!usuario)
-      return res.status(404).json({ error: 'Usuario no encontrado o no pertenece a tu empresa' });
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado o no pertenece a tu empresa' });
 
     await Usuario.findByIdAndDelete(req.params.id);
     res.json({ mensaje: 'Usuario eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PATCH /api/gerente/rangos
+// El gerente actualiza los rangos óptimos de su empresa
+router.patch('/rangos', async (req, res) => {
+  try {
+    const { ph, temp, nivelMinimo } = req.body;
+
+    // Validaciones básicas
+    const validar = (obj, nombre) => {
+      if (obj === undefined) return;
+      const { min, max } = obj;
+      if (min === undefined || max === undefined)
+        throw new Error(`${nombre}: debes enviar min y max`);
+      if (typeof min !== 'number' || typeof max !== 'number')
+        throw new Error(`${nombre}: min y max deben ser números`);
+      if (min >= max)
+        throw new Error(`${nombre}: min debe ser menor que max`);
+    };
+
+    validar(ph,'pH');
+    validar(temp,'Temperatura');
+
+    if (nivelMinimo !== undefined) {
+      if (typeof nivelMinimo !== 'number')
+        throw new Error('Nivel mínimo debe ser un número');
+      if (nivelMinimo < 0 || nivelMinimo > 100)
+        throw new Error('Nivel mínimo debe estar entre 0 y 100');
+    }
+
+    const actualizacion = {};
+    if (ph) { actualizacion['rangosOptimos.ph.min']   = ph.min;   actualizacion['rangosOptimos.ph.max']   = ph.max;   }
+    if (temp) { actualizacion['rangosOptimos.temp.min'] = temp.min; actualizacion['rangosOptimos.temp.max'] = temp.max; }
+    if (nivelMinimo !== undefined) { actualizacion['rangosOptimos.nivelMinimo'] = nivelMinimo; }
+
+    const empresa = await Empresa.findByIdAndUpdate(
+      req.usuario.empresa,
+      { $set: actualizacion },
+      { new: true }
+    );
+
+    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+
+    res.json({ mensaje: 'Rangos actualizados correctamente', rangosOptimos: empresa.rangosOptimos });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// GET /api/gerente/nodos - accesible para cualquier rol autenticado
+// El dashboard de usuario lo usa para saber cuántos nodos tiene la empresa
+router.get('/nodos', async (req, res) => {
+  try {
+    const empresa = await Empresa.findById(req.usuario.empresa);
+    if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
+
+    // Solo devuelve nombre y activo - sin apiKey
+    res.json({
+      nodos: empresa.nodos.map(n => ({ nombre: n.nombre, activo: n.activo }))
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

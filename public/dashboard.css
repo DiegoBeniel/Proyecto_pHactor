@@ -273,19 +273,3 @@ body {
   color: #fff;
   font-weight: 600;
 }
-
-/* Barra de nivel de llenado */
-.barra_nivel_contenedor {
-  background: #333;
-  border-radius: 20px;
-  height: 8px;
-  margin: 8px 0;
-  overflow: hidden;
-}
-
-.barra_nivel_relleno {
-  height: 100%;
-  border-radius: 20px;
-  transition: width 0.4s ease, background 0.3s;
-  width: 0%;
-}

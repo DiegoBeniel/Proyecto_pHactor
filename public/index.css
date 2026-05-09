@@ -227,6 +227,7 @@ body {
   font-size: 18px;
   font-weight: 800;
   margin-bottom: 18px;
+  margin: 0 auto 18px auto;
 }
 
 .funcion_icono.icono_morado {
@@ -246,12 +247,18 @@ body {
   border: 3px solid rgba(91, 158, 248, 0.25);
   color: #5b9ef8;
 }
+.funcion_icono.icono_amarillo {
+  background: rgba(243, 156, 18, 0.1);
+  border: 3px solid rgba(243, 156, 18, 0.25);
+  color: #f39c12;
+}
 
 .funcion_titulo {
   color: #fff;
   font-size: 17px;
   font-weight: 600;
   margin-bottom: 10px;
+  text-align: center;
 }
 
 .funcion_texto {
@@ -259,6 +266,7 @@ body {
   font-size: 14px;
   line-height: 1.65;
   margin: 0;
+  text-align: center;
 }
 
 /* Planes disponibles */

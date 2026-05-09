@@ -1,6 +1,6 @@
 // Verificar sesión y que sea gerente
 const token = localStorage.getItem('token');
-const rol   = localStorage.getItem('rol');
+const rol = localStorage.getItem('rol');
 
 if (!token) window.location.href = 'login.html';
 if (rol !== 'gerente') window.location.href = 'dashboard.html';
@@ -29,11 +29,12 @@ function formatearFecha(iso) {
 }
 
 function mostrarMensaje(el, texto) {
+  if (!el) return;
   el.textContent = texto;
   el.classList.remove('d-none');
 }
 
-//Modal: Cambiar nombre del gerente
+// Modal para cambiar nombre del gerente
 const instancia_modal_nombre = new bootstrap.Modal(document.getElementById('modal_nombre'));
 
 function abrirModalNombre() {
@@ -58,7 +59,7 @@ document.getElementById('btn_guardar_nombre').addEventListener('click', async ()
   btn.textContent = 'Guardando...';
 
   try {
-    const res  = await fetch('/api/auth/nombre', {
+    const res = await fetch('/api/auth/nombre', {
       method: 'PATCH', headers: encabezados(),
       body: JSON.stringify({ nombre })
     });
@@ -68,7 +69,7 @@ document.getElementById('btn_guardar_nombre').addEventListener('click', async ()
 
     localStorage.setItem('nombre', data.nombre);
     document.getElementById('nombre_gerente').textContent = data.nombre;
-    mostrarMensaje(div_exito, 'Nombre actualizado.');
+    mostrarMensaje(div_exito, '✓ Nombre actualizado.');
     setTimeout(() => instancia_modal_nombre.hide(), 1500);
 
   } catch {
@@ -79,7 +80,7 @@ document.getElementById('btn_guardar_nombre').addEventListener('click', async ()
   }
 });
 
-// Cargar datos de la empresa y estado del contrato
+// Cargar los datos de la empresa
 async function cargarEmpresa() {
   try {
     const res = await fetch('/api/gerente/mi-empresa', { headers: encabezados() });
@@ -88,14 +89,15 @@ async function cargarEmpresa() {
 
     const emp = await res.json();
 
-    document.getElementById('nombre_empresa').textContent = emp.nombre || '—';
-    document.getElementById('clave_acceso').textContent   = emp.claveAcceso || '—';
+    document.getElementById('nombre_empresa').textContent= emp.nombre || '—';
+    document.getElementById('clave_acceso').textContent= emp.claveAcceso || '—';
 
     const fin = emp.contrato?.fin
       ? new Date(emp.contrato.fin).toLocaleDateString('es-MX')
       : '—';
     document.getElementById('fecha_fin_contrato').textContent = fin;
 
+    // Colorear la tarjeta según estado del contrato
     const tarjeta = document.getElementById('tarjeta_contrato');
     const dias_el = document.getElementById('dias_restantes');
     const etiqueta = document.getElementById('etiqueta_contrato');
@@ -106,8 +108,8 @@ async function cargarEmpresa() {
       etiqueta.textContent = 'Contrato vencido';
     } else if (emp.porVencer) {
       dias_el.textContent  = emp.diasRestantes;
-      tarjeta.classList.add('contrato_alerta');
-      etiqueta.textContent = '⚠ ¡Días restantes! Renueva pronto';
+      tarjeta.classList.add('contrato_alerta'); // naranja cuando quedan ≤5 días
+      etiqueta.textContent = '¡Días restantes! Renueva pronto';
     } else {
       dias_el.textContent = emp.diasRestantes ?? '—';
     }
@@ -117,111 +119,7 @@ async function cargarEmpresa() {
   }
 }
 
-// Cargar nodos y sus estados
-async function cargarNodos() {
-  const tbody = document.getElementById('filas_nodos');
-  const div_error = document.getElementById('error_nodos');
-
-  try {
-    const res  = await fetch('/api/gerente/nodos-detalle', { headers: encabezados() });
-    const data = await res.json();
-    const nodos = data.nodos || [];
-
-    if (nodos.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="texto_cargando">No hay nodos registrados</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = nodos.map(n => {
-      // Estado del nodo (activo/suspendido)
-      const clase_nodo  = n.activo ? 'etiqueta_activa' : 'etiqueta_suspendida';
-      const texto_nodo  = n.activo ? 'Activo' : 'Suspendido';
-
-      // Estado del último lote medido
-      let html_lote = '<span style="color:#555;">Sin datos</span>';
-      if (n.ultimoEstado === 'OK')
-        html_lote = '<span class="etiqueta_activa">OK</span>';
-      else if (n.ultimoEstado === 'ALERTA')
-        html_lote = '<span class="etiqueta_suspendida">ALERTA</span>';
-
-      // Encode del nombre para pasarlo en el onclick sin conflictos de comillas
-      const nombre_enc = encodeURIComponent(n.nombre);
-
-      return `
-        <tr>
-          <td><strong>${n.nombre}</strong></td>
-          <td>${n.alturaCm ? n.alturaCm + ' cm' : '—'}</td>
-          <td>
-            ${html_lote}
-            ${n.ultimaFecha ? `<br><small style="color:#555;">${formatearFecha(n.ultimaFecha)}</small>` : ''}
-          </td>
-          <td><span class="${clase_nodo}">${texto_nodo}</span></td>
-          <td>
-            <div class="d-flex gap-1 flex-wrap">
-              <button class="${n.activo ? 'btn boton_suspender' : 'btn boton_activar'}"
-                onclick="toggleNodo('${nombre_enc}', ${n.activo})">
-                ${n.activo ? 'Suspender' : 'Activar'}
-              </button>
-              <button class="btn boton_eliminar"
-                onclick="eliminarNodo('${nombre_enc}')">
-                Eliminar
-              </button>
-            </div>
-          </td>
-        </tr>`;
-    }).join('');
-
-    div_error.classList.add('d-none');
-
-  } catch {
-    mostrarMensaje(div_error, 'Error al cargar nodos.');
-  }
-}
-
-// Toggle nodo activo/suspendido
-async function toggleNodo(nombre_enc, esta_activo) {
-  const nombre = decodeURIComponent(nombre_enc);
-  const confirmado = confirm(
-    esta_activo
-      ? `¿Suspender el nodo "${nombre}"? Dejará de recibir datos.`
-      : `¿Activar el nodo "${nombre}"?`
-  );
-  if (!confirmado) return;
-
-  try {
-    const res  = await fetch(`/api/gerente/nodos/${encodeURIComponent(nombre)}/toggle`, {
-      method: 'PATCH', headers: encabezados()
-    });
-    const data = await res.json();
-
-    if (!res.ok) { alert(data.error || 'Error al cambiar estado.'); return; }
-    await cargarNodos();
-
-  } catch {
-    alert('No se pudo conectar con el servidor.');
-  }
-}
-
-// Eliminar nodo
-async function eliminarNodo(nombre_enc) {
-  const nombre = decodeURIComponent(nombre_enc);
-  if (!confirm(`¿Eliminar el nodo "${nombre}"? Se borrarán todas sus mediciones. Esta acción no se puede deshacer.`)) return;
-
-  try {
-    const res  = await fetch(`/api/gerente/nodos/${encodeURIComponent(nombre)}`, {
-      method: 'DELETE', headers: encabezados()
-    });
-    const data = await res.json();
-
-    if (!res.ok) { alert(data.error || 'Error al eliminar.'); return; }
-    await cargarNodos();
-
-  } catch {
-    alert('No se pudo conectar con el servidor.');
-  }
-}
-
-// Cargar usuarios
+// Cargar usuarios de la empresa y mostrarlos en la tabla
 async function cargarUsuarios() {
   const tbody = document.getElementById('filas_usuarios');
   const div_error = document.getElementById('error_usuarios');
@@ -296,7 +194,7 @@ document.getElementById('btn_agregar_usuario').addEventListener('click', async (
 
     if (!res.ok) return mostrarMensaje(div_error, data.error || 'Error al agregar el usuario.');
 
-    mostrarMensaje(div_exito, `✓ Usuario agregado. Contraseña enviada a ${email}.`);
+    mostrarMensaje(div_exito, `Usuario agregado. Contraseña enviada a ${email}.`);
     ['campo_u_nombre','campo_u_email','campo_u_tel'].forEach(id => document.getElementById(id).value = '');
     await cargarUsuarios();
 
@@ -311,7 +209,7 @@ document.getElementById('btn_agregar_usuario').addEventListener('click', async (
 // Toggle usuario activo/suspendido
 async function toggleUsuario(id, esta_activo) {
   try {
-    const res  = await fetch(`/api/gerente/usuarios/${id}/toggle`, {
+    const res = await fetch(`/api/gerente/usuarios/${id}/toggle`, {
       method: 'PATCH', headers: encabezados()
     });
     const data = await res.json();
@@ -329,16 +227,18 @@ async function eliminarUsuario(id, nombre) {
   if (!confirm(`¿Eliminar a "${nombre}"? Esta acción no se puede deshacer.`)) return;
 
   try {
-    const res  = await fetch(`/api/gerente/usuarios/${id}`, {
+    const res = await fetch(`/api/gerente/usuarios/${id}`, {
       method: 'DELETE', headers: encabezados()
     });
     const data = await res.json();
 
     if (!res.ok) { alert(data.error || 'Error al eliminar.'); return; }
 
+    // Quitar la fila directamente sin recargar toda la tabla
     const fila = document.getElementById(`fila_usuario_${id}`);
     if (fila) fila.remove();
 
+    // Restar 1 al contador manualmente
     const total = parseInt(document.getElementById('total_usuarios').textContent) - 1;
     document.getElementById('total_usuarios').textContent = total;
 
@@ -347,7 +247,77 @@ async function eliminarUsuario(id, nombre) {
   }
 }
 
+// Rangos óptimos de sensores, se cargan al inicio y se pueden actualizar
+async function cargarRangos() {
+  try {
+    const res = await fetch('/api/gerente/rangos', { headers: encabezados() });
+    const data = await res.json();
+
+    if (!res.ok) return;
+
+    const r = data.rangosOptimos;
+    if (!r) return;
+
+    if (r.ph) { document.getElementById('rango_ph_min').value = r.ph.min; document.getElementById('rango_ph_max').value   = r.ph.max;   }
+    if (r.temp) { document.getElementById('rango_temp_min').value = r.temp.min; document.getElementById('rango_temp_max').value = r.temp.max; }
+    if (r.nivelMinimo !== undefined) { document.getElementById('rango_nivel_min').value = r.nivelMinimo; }
+
+  } catch {
+    console.error('Error al cargar rangos.');
+  }
+}
+
+document.getElementById('btn_guardar_rangos').addEventListener('click', async () => {
+  const div_error = document.getElementById('error_rangos');
+  const div_exito = document.getElementById('exito_rangos');
+  div_error.classList.add('d-none');
+  div_exito.classList.add('d-none');
+
+  const ph_min = parseFloat(document.getElementById('rango_ph_min').value);
+  const ph_max = parseFloat(document.getElementById('rango_ph_max').value);
+  const tmp_min =parseFloat(document.getElementById('rango_temp_min').value);
+  const tmp_max = parseFloat(document.getElementById('rango_temp_max').value);
+  const nivel_min = parseFloat(document.getElementById('rango_nivel_min').value);
+
+  if ([ph_min, ph_max, tmp_min, tmp_max, nivel_min].some(isNaN))
+    return mostrarMensaje(div_error, 'Todos los campos deben tener un valor numérico.');
+  if (ph_min >= ph_max)
+    return mostrarMensaje(div_error, 'pH: el mínimo debe ser menor que el máximo.');
+  if (tmp_min >= tmp_max)
+    return mostrarMensaje(div_error, 'Temperatura: el mínimo debe ser menor que el máximo.');
+  if (nivel_min < 0 || nivel_min > 100)
+    return mostrarMensaje(div_error, 'Nivel mínimo debe estar entre 0 y 100.');
+
+  const btn = document.getElementById('btn_guardar_rangos');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try {
+    const res  = await fetch('/api/gerente/rangos', {
+      method: 'PATCH',
+      headers: encabezados(),
+      body: JSON.stringify({
+        ph: { min: ph_min,  max: ph_max  },
+        temp: { min: tmp_min, max: tmp_max },
+        nivelMinimo: nivel_min
+      })
+    });
+    const data = await res.json();
+
+    if (!res.ok) return mostrarMensaje(div_error, data.error || 'Error al guardar rangos.');
+
+    mostrarMensaje(div_exito, 'Rangos actualizados correctamente.');
+    setTimeout(() => div_exito.classList.add('d-none'), 3000);
+
+  } catch {
+    mostrarMensaje(div_error, 'No se pudo conectar con el servidor.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Guardar rangos';
+  }
+});
+
 // Arranque
 cargarEmpresa();
-cargarNodos();
 cargarUsuarios();
+cargarRangos();

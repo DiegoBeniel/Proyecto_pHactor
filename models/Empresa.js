@@ -31,6 +31,13 @@ const empresaSchema = new mongoose.Schema({
     telefono: { type: String }
   },
 
+  // Rangos óptimos de los sensores — cada empresa puede tener los suyos
+  rangosOptimos: {
+    ph:          { min: { type: Number, default: 6.0 }, max: { type: Number, default: 8.0 } },
+    temp:        { min: { type: Number, default: 20  }, max: { type: Number, default: 40  } },
+    nivelMinimo: { type: Number, default: 80 }
+  },
+
   fechaCreacion:{ type: Date, default: Date.now }
 });
 
