@@ -16,7 +16,7 @@ async function enviarPasswordProvisional(to, nombre, tempPassword) {
     html: `
       <div style=" max-width:480px; margin:0 auto; padding:32px; border:1px solid #e0e0e0; border-radius:8px;">
         <h2 style="color:#952ecc;">Bienvenido, ${nombre}</h2>
-        <p>Tu cuenta fue creada en el sistema de <strong>Phactor/strong>.</p>
+        <p>Tu cuenta fue creada en el sistema de <strong>Phactor </strong>.</p>
         <p>Tu contraseña provisional es:</p>
         <div style="background:#f4f4f4; padding:16px; text-align:center; font-size:25px; letter-spacing:4px; font-weight:bold; color:#952ecc;">
           ${tempPassword}
