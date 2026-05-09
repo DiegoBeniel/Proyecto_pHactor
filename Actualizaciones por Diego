@@ -517,3 +517,147 @@ Resultado
 ⚠	Conexión a MongoDB Atlas (nube) — pendiente
 ⚠	Integración real con ESP32 — pendiente
 ⚠	Despliegue en servidor externo — pendiente
+
+
+7. Actualización — Multi-nodo, sensor ultrasónico y reestructuración de empresa
+📅 8 de mayo de 2026
+
+## Reestructuración del modelo Empresa.js
+Se eliminó el campo `apiKey` raíz y se reemplazó por un array `nodos[]`.
+Cada nodo representa un tambo físico con su propio ESP32.
+Esto permite que una empresa tenga hasta 10 tambos independientes monitoreados desde la misma cuenta.
+
+## Campos del nodo
+Cada elemento del array `nodos[]` contiene:
+- `nombre` → identificador del nodo (ej: "Nodo 1", "Tambo Norte")
+- `alturaCm` → altura interna del tambo en cm, necesaria para que el ESP32 calcule el % de llenado
+- `apiKey` → clave hexadecimal de 64 caracteres generada con `crypto.randomBytes(32)`. Una por nodo
+- `activo` → booleano para activar/desactivar nodos individualmente
+
+## Actualización del hook pre-save de Empresa.js
+Se modificó para generar una `apiKey` individual por cada nodo que no tenga una asignada, en lugar de generar una sola para toda la empresa.
+
+## Actualización del modelo Medicion.js
+Se agregaron dos campos al esquema:
+- `nodoNombre` → nombre del nodo que envió el dato, se guarda automáticamente al recibir la medición
+- `nivel` → porcentaje de llenado del tambo (0–100%) enviado por el sensor ultrasónico. Si el ESP32 no lo manda se guarda como `null`
+
+##Se actualizó el hook pre-save para incluir el nivel en el cálculo del estado:
+- Si nivel baja del 80% → ALERTA
+- Si pH o temperatura están fuera de rango → ALERTA
+- Si todo está dentro del rango → OK
+
+## Actualización de routes/datos.js
+Se modificó `POST /api/datos` para buscar la empresa usando `'nodos.apiKey'` en lugar de `apiKey` raíz:
+```
+Empresa.findOne({ 'nodos.apiKey': apiKey })
+```
+Una vez encontrada la empresa, identifica el nodo específico que corresponde a esa apiKey y guarda `nodoNombre` en la medición.
+
+##Se agregó filtro por nodo en las rutas GET mediante query param:
+- `GET /api/datos?nodo=Nodo 1` → devuelve solo mediciones de ese nodo
+- `GET /api/datos/ultima?nodo=Nodo 1` → devuelve la última medición de ese nodo
+- Sin query param → devuelve todo como antes
+
+## Actualización de routes/admin.js
+Se actualizó `POST /api/admin/empresas` para recibir un array `nodos` en el body con nombre y `alturaCm` de cada nodo. Las `apiKey`s se generan automáticamente en el `pre-save`.
+Se actualizó `GET /api/admin/empresas` para devolver el array de nodos completo con sus `apiKey`s. La `claveAcceso` ya no se devuelve al admin.
+
+## Actualización de routes/gerente.js
+Se actualizó `GET /api/gerente/mi-empresa` para que no devuelva las `apiKey`s de los nodos. Solo devuelve nombre y estado de cada nodo.
+
+##Se agregó nueva ruta accesible para cualquier usuario autenticado:
+- `GET /api/gerente/nodos` → devuelve nombres y estado de los nodos de la empresa. La usa el dashboard para saber cuántos tabs renderizar
+
+## Formulario de crear empresa migrado a modal
+Se movió el formulario de sección fija a modal (`modal_crear_empresa`).
+El modal tiene dos secciones:
+- Datos generales: nombre de empresa, duración de contrato, datos del gerente y cantidad de nodos (1–10)
+- Configuración de nodos: se generan dinámicamente con `generarCamposNodos()` al cambiar el select. Cada nodo tiene nombre editable y altura del tambo en cm
+
+## Actualización de la tabla de empresas en admin
+Se eliminó la columna "Clave de acceso" y se reemplazó por:
+- Columna "Nodos" → cantidad de nodos de la empresa
+- Columna "API Keys" → botón "Ver keys" que abre modal con la lista de nodos, su altura en cm y su `apiKey` para programar los ESP32
+
+##Se corrigió el conteo de empresas activas en las estadísticas:
+Antes contaba empresas con `activa: true` aunque tuvieran contrato vencido.
+Ahora excluye las vencidas:
+```js
+empresas.filter(e => e.activa && !e.vencida).length
+```
+
+## Actualización del panel Gerente
+Se eliminó la sección "API Key (ESP32)" del panel. El gerente no necesita esa información, es exclusiva del admin para programar los ESP32.
+La clave de acceso para usuarios sigue visible.
+
+## Actualización del dashboard de usuario
+##Se agregó soporte para múltiples nodos mediante tabs:
+- Al cargar consulta `GET /api/gerente/nodos`
+- Si hay más de 1 nodo → renderiza barra de tabs, uno por nodo
+- Al cambiar de tab → filtra todas las peticiones con `?nodo=...` y actualiza el título de la sección
+- Si hay 1 solo nodo → no se muestran tabs, el dashboard funciona igual que antes
+
+##Se agregó tarjeta de nivel de llenado:
+- Muestra el porcentaje actual con barra visual que cambia de color: verde si está en rango, roja si baja del 80%
+- Si la medición no trae `nivel` (null) → la tarjeta se oculta automáticamente
+
+##Se agregó tercera gráfica de nivel (`grafica_nivel`):
+Las tres gráficas (pH, temperatura, nivel) ahora ocupan `col-lg-4` cada una.
+
+##Se agregó columna "Nivel" a la tabla de mediciones:
+Muestra el porcentaje si existe, "—" si no hay sensor ultrasónico.
+
+## Actualización del simulador
+##Se agregó generación de `nivel` en `generarDatos()`:
+- 80% de probabilidad → nivel entre 25% y 100% (OK)
+- 20% de probabilidad → nivel entre 0% y 20% (ALERTA)
+
+El `console.log` ahora incluye el nivel en cada envío:
+```
+[12:30:00]  pH: 6.32  Temp: 28.4°C  Nivel: 67.3%  Estado: OK
+```
+
+##Para probar múltiples nodos se ejecuta el simulador en terminales separadas:
+```
+node simulador.js API_KEY_NODO_1
+node simulador.js API_KEY_NODO_2
+```
+
+## Actualización de la landing page
+Se actualizó la sección hero para mostrar los 3 sensores: pH, temperatura y nivel (%).
+Se expandió la sección de funciones de 3 a 4 tarjetas:
+- Monitoreo de pH
+- Control de temperatura
+- Nivel de llenado (sensor ultrasónico)
+- Multi-tambo (múltiples nodos por empresa)
+
+## Migración de base de datos
+Las empresas creadas con la estructura anterior son incompatibles con la nueva.
+
+##Opción 1 (desarrollo):
+Borrar colecciones desde MongoDB Compass y recrear desde el panel admin.
+
+##Opción 2 (producción):
+Ejecutar el script `migrar.js` que convierte cada empresa vieja a una empresa con 1 nodo usando la `apiKey` que ya tenía:
+```
+node migrar.js
+```
+
+## Nuevos estilos en dashboard.css
+Se agregaron al final del archivo:
+- `.tabs_nodos`, `.tab_nodo`, `.tab_nodo_activo` → barra de tabs por nodo
+- `.barra_nivel_contenedor`, `.barra_nivel_relleno` → barra visual de llenado con transición de color
+
+## Resultado
+✔ Multi-nodo: una empresa puede tener hasta 10 tambos con ESP32 independientes
+✔ Sensor ultrasónico: nivel de llenado por tambo con alerta automática al bajar del 80%
+✔ Dashboard con tabs por nodo para usuarios
+✔ Panel admin con modal de creación y visualización de API Keys por nodo
+✔ Panel gerente sin exposición de API Keys
+✔ Simulador actualizado con nivel y soporte multi-nodo
+✔ Landing actualizada con los 3 sensores y funcionalidad multi-tambo
+⚠ Integración real con ESP32 y sensor ultrasónico — pendiente
+⚠ Alertas automáticas por nodo — pendiente
+⚠ Conexión a MongoDB Atlas — pendiente
+⚠ Despliegue en servidor externo — pendiente
