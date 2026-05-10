@@ -335,7 +335,7 @@ async function cargarDatos() {
       document.getElementById('icono_estado').textContent = todo_ok ? 'OK' : 'ALERTA';
       document.getElementById('indicador_estado').textContent = todo_ok ? 'Lote OK' : 'ALERTA';
 
-      estilizarTarjeta('tarjeta_ph','indicador_ph',    ph_ok);
+      estilizarTarjeta('tarjeta_ph','indicador_ph', ph_ok);
       estilizarTarjeta('tarjeta_temp','indicador_temp',  temp_ok);
       estilizarTarjeta('tarjeta_estado','indicador_estado', todo_ok);
 
