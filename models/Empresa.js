@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
-// --- NUEVO: schema de cada nodo/tambo ---
+// schema de cada nodo/tambo ---
 const nodoSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
   alturaCm: { type: Number, default: null }, // altura interna del tambo en cm (para calcular % de llenado)
@@ -33,8 +33,8 @@ const empresaSchema = new mongoose.Schema({
 
   // Rangos óptimos de los sensores — cada empresa puede tener los suyos
   rangosOptimos: {
-    ph:          { min: { type: Number, default: 6.0 }, max: { type: Number, default: 8.0 } },
-    temp:        { min: { type: Number, default: 20  }, max: { type: Number, default: 40  } },
+    ph: { min: { type: Number, default: 6.0 }, max: { type: Number, default: 8.0 } },
+    temp: { min: { type: Number, default: 20  }, max: { type: Number, default: 40  } },
     nivelMinimo: { type: Number, default: 80 }
   },
 

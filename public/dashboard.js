@@ -59,7 +59,7 @@ document.getElementById('btn_guardar_nombre').addEventListener('click', async ()
     }
     localStorage.setItem('nombre', data.nombre);
     document.getElementById('nombre_usuario').textContent = data.nombre;
-    div_exito.textContent = '✓ Nombre actualizado.';
+    div_exito.textContent = 'Nombre actualizado.';
     div_exito.classList.remove('d-none');
     setTimeout(() => instancia_modal_nombre.hide(), 1500);
 

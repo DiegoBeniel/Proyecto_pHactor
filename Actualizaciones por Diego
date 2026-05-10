@@ -661,3 +661,92 @@ Se agregaron al final del archivo:
 ⚠ Alertas automáticas por nodo — pendiente
 ⚠ Conexión a MongoDB Atlas — pendiente
 ⚠ Despliegue en servidor externo — pendiente
+
+8. Actualización — Rangos óptimos configurables por empresa
+📅 10 de mayo de 2026
+
+Se implementó la funcionalidad para que cada empresa pueda definir sus propios rangos óptimos de operación para pH, temperatura y nivel mínimo del tambo. Antes estos valores estaban fijos en el código; ahora el gerente los configura desde su panel y el dashboard los aplica en tiempo real.
+
+Actualización del modelo Empresa.js
+Se agregó el subdocumento rangosOptimos al esquema de Mongoose con los siguientes campos y valores por defecto:
+•	ph.min / ph.max → rango aceptable de pH (default: 6.0 – 8.0)
+•	temp.min / temp.max → rango aceptable de temperatura en °C (default: 20 – 40)
+•	nivelMinimo → porcentaje mínimo de llenado del tambo (default: 80%)
+
+Los valores por defecto permiten que el sistema funcione correctamente incluso si la empresa nunca configura sus rangos. Mongoose aplica el esquema nuevo automáticamente sin necesidad de migración ni reinicio de la base de datos.
+
+Actualización de routes/gerente.js — Nuevas rutas de rangos
+Se agregaron dos rutas al archivo de rutas del gerente:
+
+GET /api/gerente/rangos
+Devuelve los rangos óptimos actuales de la empresa del usuario autenticado. Esta ruta se colocó antes del middleware soloGerente para que también sea accesible por usuarios con rol operador. Esto es necesario porque el dashboard del operador la consulta al cargar para aplicar los rangos correctos en las tarjetas.
+
+PATCH /api/gerente/rangos
+Permite al gerente actualizar los rangos de su empresa. Esta ruta sí queda protegida detrás del middleware soloGerente. Incluye validaciones en el backend:
+•	ph y temp: ambos deben ser números, y min debe ser estrictamente menor que max
+•	nivelMinimo: debe ser un número entre 0 y 100
+El guardado usa $set con dot notation (rangosOptimos.ph.min, etc.) para no sobreescribir otros campos del documento de empresa.
+
+Actualización del panel del gerente
+Se modificaron gerente.html y gerente.js para agregar la sección de configuración de rangos.
+
+gerente.html
+Se agregó una nueva sección colapsable 'Rangos óptimos de sensores' con el mismo estilo visual que las demás secciones del panel. Contiene:
+•	Dos inputs numéricos para pH (mínimo y máximo) con value por defecto de 6.0 y 8.0
+•	Dos inputs numéricos para temperatura (mínima y máxima) con value por defecto de 20 y 40
+•	Un input numérico para el nivel mínimo del tambo con value por defecto de 80
+•	Etiquetas de unidad junto a cada par de campos (pH 0–14, °C, % de llenado 0–100)
+•	Botón 'Guardar rangos' con divs de mensaje de error y éxito
+
+Los values por defecto en el HTML son importantes: si la empresa no tiene rangos guardados en MongoDB aún, los inputs no se llenarían desde la API y parseFloat devolvería NaN, bloqueando silenciosamente el guardado.
+
+gerente.js
+Se agregaron dos bloques de lógica:
+•	cargarRangos(): consulta GET /api/gerente/rangos al cargar la página y rellena los inputs con los valores actuales de la empresa
+•	Listener del botón: valida los campos localmente antes de hacer el PATCH, deshabilita el botón mientras guarda y muestra mensaje de éxito o error según el resultado
+
+También se corrigió la función mostrarMensaje() para verificar que el elemento DOM exista antes de usarlo, evitando errores silenciosos si algún ID no está en el DOM al momento de la llamada.
+
+cargarRangos() se llama en el arranque junto a cargarEmpresa() y cargarUsuarios().
+
+Actualización del dashboard del operador
+Se modificaron dashboard.html y dashboard.js para que el dashboard use los rangos configurados por la empresa en lugar de valores fijos.
+
+dashboard.html
+Se agregaron IDs a los tres párrafos de texto que muestran los rangos en las tarjetas:
+•	id='rango_ph_texto' en la tarjeta de pH
+•	id='rango_temp_texto' en la tarjeta de temperatura
+•	id='rango_nivel_texto' en la tarjeta de nivel de llenado
+
+dashboard.js
+Se realizaron tres cambios:
+
+1. Variable rangos con defaults: se declaró una variable global con los mismos valores por defecto que el modelo. Si la petición a la API falla, el dashboard sigue funcionando con estos valores.
+let rangos = { ph: { min: 5.0, max: 7.0 }, temp: { min: 20, max: 40 }, nivelMinimo: 80 };
+
+2. Función cargarRangos(): consulta GET /api/gerente/rangos y, si la respuesta es exitosa, sobreescribe la variable rangos y actualiza el texto visible de las tres tarjetas con los valores reales de la empresa.
+
+3. Comparaciones actualizadas: las líneas que determinan si un valor está en rango ahora usan la variable rangos en lugar de constantes:
+•	pH: rangos.ph.min y rangos.ph.max
+•	Temperatura: rangos.temp.min y rangos.temp.max
+•	Nivel: rangos.nivelMinimo (con fallback a 80 usando ??)
+
+El orden de arranque del dashboard cambió para garantizar que los rangos estén listos antes de evaluar los datos:
+cargarRangos().then(() => inicializarTabs()).then(() => cargarDatos());
+
+Corrección de permisos en la ruta GET /api/gerente/rangos
+Se detectó que aunque los rangos se guardaban correctamente desde el panel del gerente, el dashboard seguía mostrando los valores por defecto. La causa fue que la ruta GET /api/gerente/rangos estaba declarada después del middleware soloGerente, por lo que los usuarios con rol operador recibían un error 403 al intentar consultarla.
+
+La solución fue mover la ruta GET /rangos antes del router.use(soloGerente), igual que ya estaba hecha la ruta GET /nodos. La ruta PATCH /rangos permanece detrás del middleware ya que modificar rangos debe ser exclusivo del gerente.
+
+Resultado
+✔	Rangos óptimos almacenados por empresa en MongoDB
+✔	Panel del gerente con formulario para configurar pH, temperatura y nivel mínimo
+✔	Dashboard del operador aplica los rangos reales de la empresa en tiempo real
+✔	Textos de rango en las tarjetas se actualizan dinámicamente al cargar
+✔	Validaciones en frontend y backend para garantizar datos correctos
+✔	Permisos correctamente separados: lectura abierta a operadores, escritura solo al gerente
+⚠	Alertas automáticas por correo cuando un sensor sale de rango — pendiente
+⚠	Integración real con ESP32 — pendiente
+⚠	Conexión a MongoDB Atlas — pendiente
+⚠	Despliegue en servidor externo — pendiente

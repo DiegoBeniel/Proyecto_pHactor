@@ -16,7 +16,7 @@ document.getElementById('btn_cerrar_sesion').addEventListener('click', () => {
 // Headers para todas las peticiones autenticadas
 function encabezados() {
   return {
-    'Content-Type':  'application/json',
+    'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
   };
 }
@@ -45,7 +45,7 @@ function abrirModalNombre() {
 }
 
 document.getElementById('btn_guardar_nombre').addEventListener('click', async () => {
-  const nombre    = document.getElementById('campo_nuevo_nombre').value.trim();
+  const nombre = document.getElementById('campo_nuevo_nombre').value.trim();
   const div_error = document.getElementById('error_modal_nombre');
   const div_exito = document.getElementById('exito_modal_nombre');
   div_error.classList.add('d-none');
@@ -84,7 +84,7 @@ document.getElementById('btn_guardar_nombre').addEventListener('click', async ()
 // Genera campos de nombre y altura por cada nodo
 // Se llama al cambiar el select de cantidad y al abrir el modal
 function generarCamposNodos() {
-  const cantidad   = parseInt(document.getElementById('campo_cantidad_nodos').value);
+  const cantidad = parseInt(document.getElementById('campo_cantidad_nodos').value);
   const contenedor = document.getElementById('contenedor_nodos');
   contenedor.innerHTML = '';
 
@@ -113,12 +113,12 @@ document.getElementById('modal_crear_empresa').addEventListener('show.bs.modal',
 
 // Crear empresa con nodos
 document.getElementById('btn_crear_empresa').addEventListener('click', async () => {
-  const nombre_empresa  = document.getElementById('campo_empresa').value.trim();
-  const meses_contrato  = document.getElementById('campo_meses').value;
-  const nombre_gerente  = document.getElementById('campo_gerente_nombre').value.trim();
-  const email_gerente   = document.getElementById('campo_gerente_email').value.trim();
-  const tel_gerente     = document.getElementById('campo_gerente_tel').value.trim();
-  const cantidad_nodos  = parseInt(document.getElementById('campo_cantidad_nodos').value);
+  const nombre_empresa = document.getElementById('campo_empresa').value.trim();
+  const meses_contrato = document.getElementById('campo_meses').value;
+  const nombre_gerente = document.getElementById('campo_gerente_nombre').value.trim();
+  const email_gerente = document.getElementById('campo_gerente_email').value.trim();
+  const tel_gerente = document.getElementById('campo_gerente_tel').value.trim();
+  const cantidad_nodos = parseInt(document.getElementById('campo_cantidad_nodos').value);
 
   const div_error = document.getElementById('error_crear');
   const div_exito = document.getElementById('exito_crear');
@@ -136,7 +136,7 @@ document.getElementById('btn_crear_empresa').addEventListener('click', async () 
     const nombre_nodo = document.getElementById(`nodo_nombre_${i}`)?.value.trim() || `Nodo ${i + 1}`;
     const altura_nodo = document.getElementById(`nodo_altura_${i}`)?.value;
     nodos.push({
-      nombre:   nombre_nodo,
+      nombre: nombre_nodo,
       alturaCm: altura_nodo ? Number(altura_nodo) : null // altura que usará el ESP32 para calcular el %
     });
   }
@@ -150,11 +150,11 @@ document.getElementById('btn_crear_empresa').addEventListener('click', async () 
       method: 'POST',
       headers: encabezados(),
       body: JSON.stringify({
-        nombreEmpresa:   nombre_empresa,
-        mesesContrato:   meses_contrato,
+        nombreEmpresa: nombre_empresa,
+        mesesContrato: meses_contrato,
         nodos,
-        gerenteNombre:   nombre_gerente,
-        gerenteEmail:    email_gerente,
+        gerenteNombre: nombre_gerente,
+        gerenteEmail: email_gerente,
         gerenteTelefono: tel_gerente
       })
     });
@@ -162,7 +162,7 @@ document.getElementById('btn_crear_empresa').addEventListener('click', async () 
 
     if (!res.ok) return mostrarMensaje(div_error, data.error || 'Error al crear la empresa.');
 
-    mostrarMensaje(div_exito, `✓ ${data.mensaje}`);
+    mostrarMensaje(div_exito, `Exitoso: ${data.mensaje}`);
 
     ['campo_empresa','campo_meses','campo_gerente_nombre','campo_gerente_email','campo_gerente_tel']
       .forEach(id => document.getElementById(id).value = '');
@@ -197,7 +197,7 @@ document.getElementById('campo_buscar').addEventListener('keydown', e => {
 
 // Cargar empresas
 async function cargarEmpresas(buscar = '') {
-  const tbody     = document.getElementById('filas_empresas');
+  const tbody = document.getElementById('filas_empresas');
   const div_error = document.getElementById('error_empresas');
 
   try {
@@ -280,7 +280,7 @@ function verKeys(id, nombre, nodos_string) {
   // Guarda el id para usarlo al agregar nodo
   empresa_keys_activa = id;
 
-  document.getElementById('titulo_modal_keys').textContent = `API Keys. Enviar en el header x-api-key. ${nombre}`;
+  document.getElementById('titulo_modal_keys').textContent = `API Keys. ${nombre}`;
   document.getElementById('lista_keys').innerHTML = nodos.map(n => `
     <div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:14px; margin-bottom:10px;">
       <p class="etiqueta_campo mb-1" style="color:#952ecc; font-weight:600;">${n.nombre}
@@ -301,10 +301,10 @@ function verKeys(id, nombre, nodos_string) {
 // Muestra empresas vencidas o con ≤5 días en la sección de alertas
 function renderizarAlertas(empresas) {
   const contenedor = document.getElementById('contenedor_alertas');
-  const alertas    = empresas.filter(e => e.porVencer || e.vencida);
+  const alertas = empresas.filter(e => e.porVencer || e.vencida);
 
   if (alertas.length === 0) {
-    contenedor.innerHTML = '<p class="texto_cargando">Sin alertas activas ✓</p>';
+    contenedor.innerHTML = '<p class="texto_cargando">Sin alertas activas</p>';
     return;
   }
 
