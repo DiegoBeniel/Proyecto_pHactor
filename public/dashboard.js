@@ -122,7 +122,7 @@ function estilizarTarjeta(id_tarjeta, id_indicador, en_rango) {
 }
 
 function tiempoEntre(iso1, iso2) {
-  if (!iso1 || !iso2) return '—';
+  if (!iso1 || !iso2) return '-';
   const seg = Math.floor(Math.abs(new Date(iso1) - new Date(iso2)) / 1000);
   if (seg < 60)   return `${seg}s`;
   if (seg < 3600) return `${Math.floor(seg/60)}m ${seg%60}s`;
@@ -130,7 +130,7 @@ function tiempoEntre(iso1, iso2) {
 }
 
 function formatearDelta(val) {
-  if (val === null || val === undefined) return '<span class="delta_neutro">—</span>';
+  if (val === null || val === undefined) return '<span class="delta_neutro">-</span>';
   const signo = val > 0 ? '+' : '';
   const clase  = val > 0 ? 'delta_sube' : val < 0 ? 'delta_baja' : 'delta_neutro';
   return `<span class="${clase}">${signo}${val.toFixed(2)}</span>`;
@@ -139,7 +139,7 @@ function formatearDelta(val) {
 // nodo seleccionado actualmente (null = primer nodo por defecto)
 let nodo_activo = null;
 
-// Rangos óptimos de la empresa — se cargan al inicio desde la API
+// Rangos óptimos de la empresa, se cargan al inicio desde la API
 let rangos = {
   ph: { min: 5.0, max: 7.0 },
   temp: { min: 20,  max: 40  },
@@ -316,12 +316,12 @@ async function cargarDatos() {
 
     const ultima = await res_ultima.json();
 
-    // Si el _id no cambió, no hay datos nuevos — no hacer nada
+    // Si el _id no cambió, no hay datos nuevos = no hacer nada
     if (ultima && ultima._id && ultima._id === ultima_id_conocida) return;
     ultima_id_conocida = ultima?._id || null;
 
     document.getElementById('nota_actualizacion').textContent =
-      'Actualizado: ' + new Date().toLocaleTimeString('es-MX') + ' — solo cambia si hay datos nuevos';
+      'Actualizado: ' + new Date().toLocaleTimeString('es-MX') + ' solo cambia si hay datos nuevos';
 
     if (ultima && ultima.ph !== undefined) {
       const ph_ok = ultima.ph >= rangos.ph.min && ultima.ph <= rangos.ph.max;
@@ -370,10 +370,10 @@ async function cargarDatos() {
       const delta_ph= anterior ? m.ph          - anterior.ph          : null;
       const delta_temp= anterior ? m.temperatura  - anterior.temperatura : null;
 
-      // mostrar nivel en la tabla si existe, '—' si no
+      // mostrar nivel en la tabla si existe, '-' si no
       const nivel_txt = (m.nivel !== null && m.nivel !== undefined)
         ? Number(m.nivel).toFixed(1) + '%'
-        : '—';
+        : '-';
 
       tbody.innerHTML += `
         <tr>

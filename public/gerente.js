@@ -23,7 +23,7 @@ function encabezados() {
 
 // Convierte fecha ISO a formato legible
 function formatearFecha(iso) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
   return d.toLocaleDateString('es-MX') + ' ' + d.toLocaleTimeString('es-MX');
 }
@@ -89,12 +89,12 @@ async function cargarEmpresa() {
 
     const emp = await res.json();
 
-    document.getElementById('nombre_empresa').textContent= emp.nombre || '—';
-    document.getElementById('clave_acceso').textContent= emp.claveAcceso || '—';
+    document.getElementById('nombre_empresa').textContent= emp.nombre || '-';
+    document.getElementById('clave_acceso').textContent= emp.claveAcceso || '-';
 
     const fin = emp.contrato?.fin
       ? new Date(emp.contrato.fin).toLocaleDateString('es-MX')
-      : '—';
+      : '-';
     document.getElementById('fecha_fin_contrato').textContent = fin;
 
     // Colorear la tarjeta según estado del contrato
@@ -111,7 +111,7 @@ async function cargarEmpresa() {
       tarjeta.classList.add('contrato_alerta'); // naranja cuando quedan ≤5 días
       etiqueta.textContent = '¡Días restantes! Renueva pronto';
     } else {
-      dias_el.textContent = emp.diasRestantes ?? '—';
+      dias_el.textContent = emp.diasRestantes ?? '-';
     }
 
   } catch {
@@ -142,7 +142,7 @@ async function cargarUsuarios() {
         <tr id="fila_usuario_${u._id}">
           <td>${u.nombre}</td>
           <td>${u.email}</td>
-          <td>${u.telefono || '—'}</td>
+          <td>${u.telefono || '-'}</td>
           <td>${formatearFecha(u.fechaCreacion)}</td>
           <td>${formatearFecha(u.ultimoLogin)}</td>
           <td><span class="${clase_estado}">${texto_estado}</span></td>

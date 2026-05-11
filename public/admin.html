@@ -130,22 +130,22 @@
            <div id="error_agregar_nodo" class="alert alerta_error d-none"></div>
            <div id="exito_agregar_nodo" class="alert alerta_exito d-none"></div>
            <div class="row g-2">
-                        <div class="col-12 col-md-5">
-                           <input type="text" id="nuevo_nodo_nombre" class="form-control campo_entrada"
-                           placeholder="Ej: Tambo Norte">
-                          </div>
-                          <div class="col-12 col-md-4">
-                            <input type="number" id="nuevo_nodo_altura" class="form-control campo_entrada"
-                            placeholder="Altura (cm)" min="1">
-                          </div>
-                          <div class="col-12 col-md-3">
-                            <button id="btn_agregar_nodo" class="btn boton_principal w-100">Agregar</button>
-                          </div>
-                        </div>
+            <div class="col-12 col-md-5">
+              <input type="text" id="nuevo_nodo_nombre" class="form-control campo_entrada"
+              placeholder="Ej: Tambo Norte">
+            </div>
+            <div class="col-12 col-md-4">
+              <input type="number" id="nuevo_nodo_altura" class="form-control campo_entrada"
+              placeholder="Altura (cm)" min="1">
+            </div>
+            <div class="col-12 col-md-3">
+              <button id="btn_agregar_nodo" class="btn boton_principal w-100">Agregar</button>
+            </div>
+          </div>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <p class="etiqueta_campo mb-3">Cada ESP32 con la API Key de su nodo. Enviar en el header <code>x-api-key</code>.</p>
+          <p class="etiqueta_campo mb-3">Cada ESP32 con la API Key de su nodo. Enviar en el header <i>x-api-key</i>.</p>
           <div id="lista_keys"></div>
         </div>
         <div class="modal-footer borde_modal">
@@ -179,7 +179,7 @@
       </div>
     </div>
 
-    <!-- Crear empresa — ahora es un botón que abre el modal -->
+    <!-- Crear empresa, es un botón que abre el modal -->
     <div class="seccion mb-4">
       <div class="d-flex justify-content-between align-items-center">
         <h2 class="titulo_seccion">Empresas</h2>
@@ -266,7 +266,7 @@
   </div>
 
   <footer class="pie_pagina text-center py-3">
-    <p class="mb-0">Phactor - Panel Administrativo</p>
+    <p>Phactor - Panel Administrativo</p>
     <p>CETI 2026 - Diego y Andrés</p>
     <p class="mb-0">© 2026 Phactor. Todos los derechos reservados.</p>
   </footer>

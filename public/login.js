@@ -46,7 +46,6 @@ document.getElementById('btn_login').addEventListener('click', async () => {
   const password = document.getElementById('login_password').value;
 
   if (!email || !password) return mostrarError('login_error', 'Llena todos los campos.');
-  if (!email.includes('@')) return mostrarError('login_error', 'Ingresa un correo válido.');
 
   const btn = document.getElementById('btn_login');
   btn.disabled = true;
@@ -63,9 +62,9 @@ document.getElementById('btn_login').addEventListener('click', async () => {
     if (!res.ok) return mostrarError('login_error', data.error || 'Error al iniciar sesión.');
 
     // Guardar sesión en localStorage
-    localStorage.setItem('token',  data.token);
+    localStorage.setItem('token', data.token);
     localStorage.setItem('nombre', data.usuario.nombre);
-    localStorage.setItem('rol',    data.usuario.rol);
+    localStorage.setItem('rol', data.usuario.rol);
 
     if (data.usuario.rol === 'admin')   window.location.href = 'admin.html';
     else if (data.usuario.rol === 'gerente') window.location.href = 'gerente.html';

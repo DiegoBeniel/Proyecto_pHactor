@@ -23,7 +23,7 @@ function encabezados() {
 
 // Convierte fecha ISO a formato legible en español
 function formatearFecha(iso) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
   return d.toLocaleDateString('es-MX') + ' ' + d.toLocaleTimeString('es-MX');
 }
@@ -221,7 +221,7 @@ async function cargarEmpresas(buscar = '') {
     }
 
     tbody.innerHTML = empresas.map(emp => {
-      let html_dias = '—';
+      let html_dias = '-';
       if (emp.diasRestantes !== null) {
         const clase = emp.vencida ? 'dias_vencido' : emp.porVencer ? 'dias_alerta' : 'dias_ok';
         html_dias = `<span class="${clase}">${emp.vencida ? 'Vencido' : emp.diasRestantes + ' días'}</span>`;
@@ -236,8 +236,8 @@ async function cargarEmpresas(buscar = '') {
       return `
         <tr id="fila_empresa_${emp._id}">
           <td><strong>${emp.nombre}</strong></td>
-          <td>${emp.gerente?.nombre || '—'}</td>
-          <td>${emp.contrato?.meses || '—'} mes(es)</td>
+          <td>${emp.gerente?.nombre || '-'}</td>
+          <td>${emp.contrato?.meses || '-'} mes(es)</td>
           <td>${html_dias}</td>
           <td>${emp.totalUsuarios}</td>
           <td>${emp.totalNodos || 0}</td>
@@ -320,7 +320,7 @@ function renderizarAlertas(empresas) {
           ${alertas.map(emp => `
             <tr>
               <td><strong>${emp.nombre}</strong></td>
-              <td>${emp.gerente?.nombre || '—'}</td>
+              <td>${emp.gerente?.nombre || '-'}</td>
               <td><span class="${emp.vencida ? 'dias_vencido' : 'dias_alerta'}">
                 ${emp.vencida ? 'Vencido' : emp.diasRestantes + ' días'}
               </span></td>
@@ -330,7 +330,7 @@ function renderizarAlertas(empresas) {
               <td>
                 ${emp.gerente?.correo
                   ? `<a href="mailto:${emp.gerente.correo}" class="enlace_contacto">${emp.gerente.correo}</a>`
-                  : '—'}
+                  : '-'}
                 ${emp.gerente?.telefono
                   ? ` · <a href="https://wa.me/52${emp.gerente.telefono.replace(/\D/g,'')}" target="_blank" class="enlace_contacto">WhatsApp</a>`
                   : ''}
@@ -364,8 +364,8 @@ async function cargarGerentes(buscar = '') {
       <tr>
         <td>${g.nombre}</td>
         <td>${g.email}</td>
-        <td>${g.telefono || '—'}</td>
-        <td>${g.empresa?.nombre || '—'}</td>
+        <td>${g.telefono || '-'}</td>
+        <td>${g.empresa?.nombre || '-'}</td>
         <td>${formatearFecha(g.ultimoLogin)}</td>
         <td>
           <button class="btn boton_eliminar" onclick="eliminarUsuario('${g._id}', '${g.nombre}')">
