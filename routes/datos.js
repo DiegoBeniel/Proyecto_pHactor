@@ -4,12 +4,13 @@ const Medicion = require('../models/Medicion');
 const Empresa  = require('../models/Empresa');
 const verificarToken = require('../middleware/auth');
 
-// POST /api/datos — sensor manda x-api-key en el header
+// POST /api/datos el sensor manda x-api-key en el header
 router.post('/', async (req, res) => {
   try {
     const apiKey = req.headers['x-api-key'];
     if (!apiKey) return res.status(401).json({ error: 'Se requiere x-api-key en el header' });
 
+    // Verificar que la apiKey corresponda a una empresa activa
     const empresa = await Empresa.findOne({ 'nodos.apiKey': apiKey });
     if (!empresa) return res.status(401).json({ error: 'API Key inválida' });
     if (!empresa.activa) return res.status(403).json({ error: 'Empresa suspendida, no se aceptan datos' });
@@ -18,11 +19,11 @@ router.post('/', async (req, res) => {
     const nodo = empresa.nodos.find(n => n.apiKey === apiKey);
     if (!nodo || !nodo.activo) return res.status(403).json({ error: 'Nodo inactivo o no encontrado' });
   
-    // Verificar que el contrato no haya vencido
     if (empresa.contrato?.fin && new Date() > empresa.contrato.fin) {
       return res.status(403).json({ error: 'Contrato vencido, no se aceptan datos. Contacta al administrador.' });
 }
 
+//Validar los datos recibidos
     const { ph, temperatura, nivel } = req.body;
     if (ph === undefined || temperatura === undefined)
       return res.status(400).json({ error: 'Se requieren ph y temperatura' });

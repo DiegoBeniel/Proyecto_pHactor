@@ -13,7 +13,7 @@ function soloGerente(req, res, next) {
   next();
 }
 
-// Ruta pública para cualquier usuario autenticado — el dashboard la necesita
+// Ruta pública para cualquier usuario autenticado (el dashboard la necesita)
 router.get('/nodos', verificarToken, async (req, res) => {
   try {
     const empresa = await Empresa.findById(req.usuario.empresa);
@@ -27,7 +27,7 @@ router.get('/nodos', verificarToken, async (req, res) => {
   }
 });
 
-// Ruta pública para cualquier usuario autenticado — el dashboard la necesita para colorear tarjetas
+// Ruta pública para cualquier usuario autenticado (el dashboard la necesita para colorear tarjetas)
 router.get('/rangos', verificarToken, async (req, res) => {
   try {
     const empresa = await Empresa.findById(req.usuario.empresa);
@@ -52,6 +52,7 @@ router.get('/mi-empresa', async (req, res) => {
 
     const dias = empresa.diasRestantes();
 
+    // Devolver datos relevantes para el gerente, sin apiKey ni datos sensibles
     res.json({
       _id: empresa._id,
       nombre: empresa.nombre,
@@ -76,7 +77,7 @@ router.get('/usuarios', async (req, res) => {
       empresa: req.usuario.empresa,
       rol: 'usuario'
     })
-      .select('-password')
+      .select(':password')
       .sort({ fechaCreacion: -1 });
 
     res.json(usuarios);
@@ -208,14 +209,14 @@ router.patch('/rangos', async (req, res) => {
   }
 });
 
-// GET /api/gerente/nodos - accesible para cualquier rol autenticado
+// GET /api/gerente/nodos, accesible para cualquier rol autenticado
 // El dashboard de usuario lo usa para saber cuántos nodos tiene la empresa
 router.get('/nodos', async (req, res) => {
   try {
     const empresa = await Empresa.findById(req.usuario.empresa);
     if (!empresa) return res.status(404).json({ error: 'Empresa no encontrada' });
 
-    // Solo devuelve nombre y activo - sin apiKey
+    // Solo devuelve nombre y activo osea sin apiKey
     res.json({
       nodos: empresa.nodos.map(n => ({ nombre: n.nombre, activo: n.activo }))
     });

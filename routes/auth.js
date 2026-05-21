@@ -17,7 +17,6 @@ router.post('/unirse', async (req, res) => {
 
     if (!nombre || !email || !nombreEmpresa || !claveAcceso)
       return res.status(400).json({ error: 'Todos los campos son requeridos' });
-
     if (await Usuario.findOne({ email }))
       return res.status(400).json({ error: 'Ya existe una cuenta con ese correo' });
 
@@ -31,8 +30,8 @@ router.post('/unirse', async (req, res) => {
     if (!empresa)
       return res.status(400).json({ error: 'Empresa no encontrada o clave incorrecta' });
 
+    //crear y guardar el nuevo usuario con contraseña temporal
     const tempPassword = crypto.randomBytes(4).toString('hex');
-
     const usuario = new Usuario({
       nombre,
       email,
@@ -42,9 +41,7 @@ router.post('/unirse', async (req, res) => {
       empresa: empresa._id
     });
     await usuario.save();
-
     await enviarPasswordProvisional(email, nombre, tempPassword);
-
     res.json({ mensaje: `Te uniste a ${empresa.nombre}. Contraseña provisional enviada a ${email}` });
 
   } catch (error) {
@@ -56,13 +53,12 @@ router.post('/unirse', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password)
       return res.status(400).json({ error: 'Email y contraseña son requeridos' });
 
     const usuario = await Usuario.findOne({ email });
     if (!usuario) return res.status(400).json({ error: 'Correo no encontrado' });
-    if (!usuario.activo) return res.status(403).json({ error: 'Tu cuenta está desactivada' });
+    if (!usuario.activo) return res.status(403).json({ error: 'Tu cuenta está desactivada, contacta al administrador' });
 
     const passwordCorrecta = await usuario.verificarPassword(password);
     if (!passwordCorrecta) return res.status(400).json({ error: 'Contraseña incorrecta' });
@@ -78,12 +74,14 @@ router.post('/login', async (req, res) => {
     usuario.ultimoLogin = new Date();
     await usuario.save();
 
+    //crear token JWT con id, rol y empresa (si tiene)
     const token = jwt.sign(
       { id: usuario._id, rol: usuario.rol, empresa: usuario.empresa },
       process.env.JWT_SECRET,
       { expiresIn: '8h' }
     );
 
+    // Devolver token y datos básicos del usuario (sin password)
     res.json({
       token,
       usuario: { nombre: usuario.nombre, email: usuario.email, rol: usuario.rol }
@@ -137,7 +135,8 @@ router.patch('/nombre', verificarToken, async (req, res) => {
     );
 
     res.json({ mensaje: 'Nombre actualizado', nombre: usuario.nombre });
-  } catch (error) {
+  } 
+  catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -146,7 +145,7 @@ router.patch('/nombre', verificarToken, async (req, res) => {
 router.get('/me', verificarToken, async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.usuario.id)
-      .select('-password')
+      .select(':password')
       .populate('empresa', 'nombre claveAcceso contrato activa');
     res.json(usuario);
   } catch (error) {

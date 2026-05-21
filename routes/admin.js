@@ -41,20 +41,20 @@ router.post('/empresas', async (req, res) => {
       : [{ nombre: 'Nodo 1', alturaCm: null }];
 
     const empresa = new Empresa({
-      nombre:   nombreEmpresa,
-      nodos:    nodosArray,
+      nombre: nombreEmpresa,
+      nodos: nodosArray,
       contrato: { meses: Number(mesesContrato) },
-      gerente:  { nombre: gerenteNombre, correo: gerenteEmail, telefono: gerenteTelefono }
+      gerente: { nombre: gerenteNombre, correo: gerenteEmail, telefono: gerenteTelefono }
     });
     await empresa.save();
 
     const gerente = new Usuario({
-      nombre:   gerenteNombre,
-      email:    gerenteEmail,
+      nombre: gerenteNombre,
+      email: gerenteEmail,
       telefono: gerenteTelefono || '',
       password: tempPassword,
-      rol:      'gerente',
-      empresa:  empresa._id
+      rol: 'gerente',
+      empresa: empresa._id
     });
     await gerente.save();
 
@@ -80,33 +80,33 @@ router.get('/empresas', async (req, res) => {
     const empresas = await Empresa.find(filtro).sort({ fechaCreacion: -1 });
 
     const resultado = await Promise.all(empresas.map(async (emp) => {
-      const totalUsuarios   = await Usuario.countDocuments({ empresa: emp._id });
+      const totalUsuarios = await Usuario.countDocuments({ empresa: emp._id });
       const totalMediciones = await Medicion.countDocuments({ empresa: emp._id });
-      const ultimaMedicion  = await Medicion.findOne({ empresa: emp._id }).sort({ fecha: -1 });
+      const ultimaMedicion = await Medicion.findOne({ empresa: emp._id }).sort({ fecha: -1 });
       const dias = emp.diasRestantes();
 
       return {
-        _id:    emp._id,
+        _id: emp._id,
         nombre: emp.nombre,
         // admin ve nodos con sus apiKeys para programar los ESP32
         nodos: emp.nodos.map(n => ({
-          nombre:   n.nombre,
+          nombre: n.nombre,
           alturaCm: n.alturaCm, // altura del tambo que necesita el ESP32 para calcular el %
-          apiKey:   n.apiKey,
-          activo:   n.activo
+          apiKey: n.apiKey,
+          activo: n.activo
         })),
         totalNodos: emp.nodos.length,
         // claveAcceso no se manda al admin, eso es del gerente con sus usuarios
-        activa:         emp.activa,
-        contrato:       emp.contrato,
-        diasRestantes:  dias,
-        porVencer:      dias !== null && dias <= 5 && dias >= 0,
-        vencida:        dias !== null && dias < 0,
-        gerente:        emp.gerente,
+        activa: emp.activa,
+        contrato: emp.contrato,
+        diasRestantes: dias,
+        porVencer: dias !== null && dias <= 5 && dias >= 0,
+        vencida: dias !== null && dias < 0,
+        gerente: emp.gerente,
         totalUsuarios,
         totalMediciones,
         ultimaMedicion: ultimaMedicion?.fecha || null,
-        fechaCreacion:  emp.fechaCreacion
+        fechaCreacion: emp.fechaCreacion
       };
     }));
 
@@ -124,7 +124,7 @@ router.get('/gerentes', async (req, res) => {
     const filtro = { rol: 'gerente' };
     if (buscar) filtro.$or = [
       { nombre: { $regex: buscar, $options: 'i' } },
-      { email:  { $regex: buscar, $options: 'i' } }
+      { email: { $regex: buscar, $options: 'i' } }
     ];
 
     const gerentes = await Usuario.find(filtro)
