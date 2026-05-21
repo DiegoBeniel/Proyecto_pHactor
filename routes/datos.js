@@ -30,12 +30,13 @@ router.post('/', async (req, res) => {
     // Calcular estado con los rangos de la empresa
     const r = empresa.rangosOptimos;
     const nivelFinal = nivel !== undefined ? Number(nivel) : null;
-    
+
     const phFuera = ph < r.ph.min || ph > r.ph.max;
     const tempFuera = temperatura < r.temp.min || temperatura > r.temp.max;
     const nivelFuera = nivelFinal !== null && nivelFinal < r.nivelMinimo;
     const estado = (phFuera || tempFuera || nivelFuera) ? 'ALERTA' : 'OK';
   
+    // Guardar la medición en la base de datos
     const medicion = new Medicion({
       ph,
       temperatura,

@@ -2,17 +2,18 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 
 //Un Schema es el "molde" que define qué campos tiene un documento en MongoDB y de qué tipo son
-// schema de cada nodo/tambo ---
+
+// schema de cada nodo/tambo que envía datos, dentro de la empresa
 const nodoSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
-  alturaCm: { type: Number, default: null }, // altura interna del tambo en cm (para calcular % de llenado)
-  apiKey: { type: String, unique: true },   // una key por ESP32
+  alturaCm: { type: Number, default: null }, 
+  apiKey: { type: String, unique: true }, 
   activo: { type: Boolean, default: true }
 }, { _id: false });
 
 const empresaSchema = new mongoose.Schema({
   nombre:{ type: String, required: true },
-  claveAcceso: { type: String, unique: true }, // código simple para que usuarios se unan
+  claveAcceso: { type: String, unique: true }, // código simple 
   activa: { type: Boolean, default: true },
 
   // array de nodos en lugar de una sola apiKey
@@ -32,9 +33,9 @@ const empresaSchema = new mongoose.Schema({
     telefono: { type: String }
   },
 
-  // Rangos óptimos de los sensores — cada empresa puede tener los suyos
+  // Rangos óptimos de los sensores, cada empresa puede tener los suyos
   rangosOptimos: {
-    ph: { min: { type: Number, default: 6.0 }, max: { type: Number, default: 8.0 } },
+    ph: { min: { type: Number, default: 4.0 }, max: { type: Number, default: 7.0 } },
     temp: { min: { type: Number, default: 20  }, max: { type: Number, default: 40  } },
     nivelMinimo: { type: Number, default: 80 }
   },
@@ -42,15 +43,18 @@ const empresaSchema = new mongoose.Schema({
   fechaCreacion:{ type: Date, default: Date.now }
 });
 
+//después de guardar/actualizar una empresa... genera la clave de acceso y las apiKeys de los nodos
 empresaSchema.pre('save', function () {
-  // Genera claveAcceso legible tipo "FRESNO-4821"
-  if (!this.claveAcceso) {
-    const suffix = Math.floor(1000 + Math.random() * 9000);
-    const prefix = this.nombre.replace(/\s+/g, '').toUpperCase().slice(0, 6);
-    this.claveAcceso = `${prefix}-${suffix}`;
-  }
 
-  // genera apiKey para cada nodo que aún no tenga
+  // Genera claveAcceso legible
+  if (!this.claveAcceso) {
+  const nombreEmpresa = this.nombre.replace(/\s+/g, '').toUpperCase();
+  const inicioClave = nombreEmpresa.slice(0, 6);
+  const numeroAzar = Math.floor(1000 + Math.random() * 9999);
+  this.claveAcceso = inicioClave + "-" + numeroAzar;
+}
+
+  // genera apiKey para cada nodo /nuevo)
   this.nodos.forEach(nodo => {
     if (!nodo.apiKey) {
       nodo.apiKey = crypto.randomBytes(32).toString('hex');

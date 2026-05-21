@@ -9,9 +9,9 @@ const Empresa = require('../models/Empresa');
 const verificarToken = require('../middleware/auth');
 const { enviarPasswordProvisional } = require('../utils/mailer');
 
-// ─POST /api/auth/crear-empresa
+// POST /api/auth/crear_empresa
 // El gerente se registra creando su empresa
-router.post('/crear-empresa', async (req, res) => {
+router.post('/crear_empresa', async (req, res) => {
   try {
     const { nombre, email, telefono, nombreEmpresa, mesesContrato } = req.body;
 
