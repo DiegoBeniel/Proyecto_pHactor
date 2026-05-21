@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
+//Un Schema es el "molde" que define qué campos tiene un documento en MongoDB y de qué tipo son
 // schema de cada nodo/tambo ---
 const nodoSchema = new mongoose.Schema({
   nombre: { type: String, required: true },

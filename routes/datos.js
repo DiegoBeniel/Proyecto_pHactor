@@ -26,13 +26,24 @@ router.post('/', async (req, res) => {
     const { ph, temperatura, nivel } = req.body;
     if (ph === undefined || temperatura === undefined)
       return res.status(400).json({ error: 'Se requieren ph y temperatura' });
-   
+    
+    // Calcular estado con los rangos de la empresa
+    const r = empresa.rangosOptimos;
+    const nivelFinal = nivel !== undefined ? Number(nivel) : null;
+    
+    const phFuera = ph < r.ph.min || ph > r.ph.max;
+    const tempFuera = temperatura < r.temp.min || temperatura > r.temp.max;
+    const nivelFuera = nivelFinal !== null && nivelFinal < r.nivelMinimo;
+    const estado = (phFuera || tempFuera || nivelFuera) ? 'ALERTA' : 'OK';
+  
     const medicion = new Medicion({
       ph,
       temperatura,
-      nivel:      nivel !== undefined ? Number(nivel) : null, // opcional, null si el ESP32 no lo manda
-      empresa:    empresa._id,
-      nodoNombre: nodo.nombre });
+      nivel: nivelFinal,
+      empresa: empresa._id,
+      nodoNombre: nodo.nombre,
+      estado: estado
+    });
     await medicion.save();
     res.json({ mensaje: 'Dato guardado', medicion });
 
