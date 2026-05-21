@@ -22,14 +22,9 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html'); //es la ruta absoluta
 });
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('Conectado a MongoDB');
-    app.listen(PORT, () => {
-      console.log(`Servidor corriendo en http://localhost:${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error('Error conectando a MongoDB:', err);
-    process.exit(1);
+// Conectar a MongoDB  y luego iniciar el servidor
+conectarDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
   });
+});
