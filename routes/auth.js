@@ -9,51 +9,6 @@ const Empresa = require('../models/Empresa');
 const verificarToken = require('../middleware/auth');
 const { enviarPasswordProvisional } = require('../utils/mailer');
 
-// POST /api/auth/crear_empresa
-// El gerente se registra creando su empresa
-router.post('/crear_empresa', async (req, res) => {
-  try {
-    const { nombre, email, telefono, nombreEmpresa, mesesContrato } = req.body;
-
-    if (!nombre || !email || !nombreEmpresa || !mesesContrato)
-      return res.status(400).json({ error: 'Todos los campos son requeridos' });
-
-    if (![1, 3, 6].includes(Number(mesesContrato)))
-      return res.status(400).json({ error: 'Los meses de contrato deben ser 1, 3 o 6' });
-
-    if (await Usuario.findOne({ email }))
-      return res.status(400).json({ error: 'Ya existe una cuenta con ese correo' });
-
-    const tempPassword = crypto.randomBytes(4).toString('hex');
-
-    // Crear empresa
-    const empresa = new Empresa({
-      nombre: nombreEmpresa,
-      contrato: { meses: Number(mesesContrato) },
-      gerente: { nombre, correo: email, telefono }
-    });
-    await empresa.save();
-
-    // Crear gerente vinculado a esa empresa
-    const usuario = new Usuario({
-      nombre,
-      email,
-      telefono,
-      password: tempPassword,
-      rol: 'gerente',
-      empresa: empresa._id
-    });
-    await usuario.save();
-
-    await enviarPasswordProvisional(email, nombre, tempPassword);
-
-    res.json({ mensaje: `Empresa creada. Contraseña provisional enviada a ${email}` });
-
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // POST /api/auth/unirse
 // Un usuario se une a una empresa existente con la clave de acceso
 router.post('/unirse', async (req, res) => {
