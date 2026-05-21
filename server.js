@@ -3,9 +3,10 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
@@ -16,8 +17,9 @@ app.use('/api/datos', require('./routes/datos'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/gerente', require('./routes/gerente'));
 
+// Ruta para servir el frontend al entrar a la raíz
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
+  res.sendFile(__dirname + '/public/index.html'); //es la ruta absoluta
 });
 
 mongoose.connect(process.env.MONGO_URI)

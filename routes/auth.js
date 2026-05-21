@@ -1,3 +1,5 @@
+//Este archivo maneja todo lo relacionado con cuentas: registrarse, entrar al sistema y cambiar contraseña
+
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
