@@ -77,7 +77,7 @@ router.get('/usuarios', async (req, res) => {
       empresa: req.usuario.empresa,
       rol: 'usuario'
     })
-      .select(':password')
+      .select('-password')
       .sort({ fechaCreacion: -1 });
 
     res.json(usuarios);

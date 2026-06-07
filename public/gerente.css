@@ -16,7 +16,7 @@
 /* Contrato por vencer: naranja */
 #tarjeta_contrato.contrato_alerta {
   background: #3a2a00;
-  border-left-color: #f39c12;
+  border-color: #f39c12;
 }
 
 #tarjeta_contrato.contrato_alerta .numero_stat {
@@ -26,7 +26,7 @@
 /* Contrato vencido: rojo */
 #tarjeta_contrato.contrato_vencido {
   background: #2a0000;
-  border-left-color: #e74c3c;
+  border-color: #e74c3c;
 }
 
 #tarjeta_contrato.contrato_vencido .numero_stat {

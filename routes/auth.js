@@ -145,7 +145,7 @@ router.patch('/nombre', verificarToken, async (req, res) => {
 router.get('/me', verificarToken, async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.usuario.id)
-      .select(':password')
+      .select('-password')
       .populate('empresa', 'nombre claveAcceso contrato activa');
     res.json(usuario);
   } catch (error) {

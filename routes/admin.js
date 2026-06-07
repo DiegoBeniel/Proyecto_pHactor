@@ -35,7 +35,7 @@ router.post('/empresas', async (req, res) => {
 
     const nodosArray = Array.isArray(nodos)
       ? nodos.map((n, i) => ({
-          nombre:   n.nombre?.trim() || `Nodo ${i + 1}`,
+          nombre: n.nombre?.trim() || `Nodo ${i + 1}`,
           alturaCm: n.alturaCm ? Number(n.alturaCm) : null // altura del tambo en cm para el ESP32
         }))
       : [{ nombre: 'Nodo 1', alturaCm: null }];
