@@ -6,8 +6,8 @@ const crypto = require('crypto');
 // schema de cada nodo/tambo que envía datos, dentro de la empresa
 const nodoSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
-  alturaCm: { type: Number, default: null }, 
-  apiKey: { type: String, unique: true }, 
+  alturaCm: { type: Number, default: null  }, 
+  apiKey: { type: String, unique: true, sparse: true }, // cada nodo tiene su propia apiKey
   activo: { type: Boolean, default: true }
 }, { _id: false });
 

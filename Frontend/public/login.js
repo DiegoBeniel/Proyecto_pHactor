@@ -1,5 +1,5 @@
 function mostrarVista(id) {
-  ['vista_login', 'vista_unirse', 'vista_password'] .forEach(v => document.getElementById(v).classList.add('d-none'));
+  ['vista_login', 'vista_unirse','vista_password'] .forEach(v => document.getElementById(v).classList.add('d-none'));
   document.getElementById(id).classList.remove('d-none');
   limpiarMensajes();
 }
