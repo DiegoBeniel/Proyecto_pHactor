@@ -10,8 +10,7 @@ const PORT = process.env.PORT || 3000;
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
-
+app.use(express.static('Frontend/public'));
 // Rutas
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/datos', require('./routes/datos'));
@@ -20,7 +19,7 @@ app.use('/api/gerente', require('./routes/gerente'));
 
 // Ruta para servir el frontend al entrar a la raíz
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html'); //es la ruta absoluta
+  res.sendFile(__dirname + '/Frontend/public/index.html');
 });
 
 // Conectar a MongoDB  y luego iniciar el servidor
